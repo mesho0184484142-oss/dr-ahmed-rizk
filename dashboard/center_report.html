@@ -5,170 +5,290 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تقرير السنتر التفصيلي - منصة د. أحمد رزق</title>
     <!-- ربط ملفات التصميم -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    
+    <!-- مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
-        /* تنسيقات خاصة بشريط المستوى داخل التقرير */
-        .progress-container {
-            background-color: #e2e8f0; 
-            border-radius: 10px; 
-            width: 100%; 
-            height: 10px; 
-            margin-bottom: 5px;
-            overflow: hidden;
-        }
-        .progress-bar {
-            height: 100%; 
-            border-radius: 10px;
-        }
+        body { font-family: 'Cairo', sans-serif !important; background-color: #f4f7fe !important; color: #2b3674 !important; margin: 0 !important; display: flex !important; min-height: 100vh !important; }
         
-        /* إخفاء العناصر غير المرغوب فيها عند الطباعة */
+        .sidebar { width: 280px !important; background: #ffffff !important; box-shadow: -5px 0 20px rgba(0,0,0,0.05) !important; position: fixed !important; right: 0 !important; top: 0 !important; height: 100vh !important; padding: 30px 20px !important; z-index: 1000 !important; overflow-y: auto !important; }
+        .sidebar h3 { color: #2b3674 !important; font-weight: 800 !important; text-align: center !important; margin-bottom: 40px !important; font-size: 22px !important; }
+        .sidebar ul { list-style: none !important; padding: 0 !important; margin: 0 !important; }
+        .sidebar ul li { margin-bottom: 10px !important; }
+        .sidebar ul li a { display: block !important; padding: 15px 20px !important; color: #a3aed1 !important; text-decoration: none !important; font-weight: 700 !important; border-radius: 12px !important; transition: 0.3s !important; }
+        .sidebar ul li a.active, .sidebar ul li a:hover { background: #4318FF !important; color: #ffffff !important; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2) !important; }
+        
+        .main-content { margin-right: 280px !important; padding: 40px !important; width: calc(100% - 280px) !important; box-sizing: border-box !important; }
+        h2 { font-weight: 800; color: #2b3674; margin-bottom: 30px; font-size: 28px; margin-top: 0; }
+
+        .card { background: #ffffff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 30px; border: 1px solid #e0e5f2; }
+        
+        .filters-section { display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; background: #f4f7fe; border: none; }
+        .form-group { flex: 1; min-width: 200px; margin-bottom: 0; }
+        label { font-weight: 700; color: #2b3674; margin-bottom: 10px; display: block; }
+        select { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #e0e5f2; background: #ffffff; color: #2b3674; font-weight: 600; outline: none; font-family: 'Cairo'; }
+        
+        .action-btn { background: #4318FF; color: white; border: none; padding: 15px 30px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; height: 52px; }
+        .action-btn:hover { background: #2b3674; transform: translateY(-2px); }
+        .print-btn-main { background: #05CD99; }
+        .print-btn-main:hover { background: #04b082; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        th { background: #f4f7fe; color: #a3aed1; font-weight: 700; padding: 15px; text-align: right; }
+        td { padding: 15px; border-bottom: 1px solid #f4f7fe; color: #2b3674; font-weight: 600; }
+        tr:hover td { background: #f9fbfd; }
+
+        .score-badge { padding: 5px 12px; border-radius: 20px; font-weight: 800; font-size: 14px; }
+        .score-excellent { background: rgba(5, 205, 153, 0.1); color: #05CD99; }
+        .score-good { background: rgba(67, 24, 255, 0.1); color: #4318FF; }
+        .score-fail { background: rgba(238, 93, 80, 0.1); color: #EE5D50; }
+
+        .whatsapp-btn { background: #25D366; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 700; font-family: 'Cairo'; font-size: 13px; text-decoration: none; display: inline-block; }
+        .whatsapp-btn:hover { background: #128C7E; }
+
         @media print {
-            .sidebar, .print-btn, .filters-section {
-                display: none !important;
-            }
-            .main-content {
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
-            }
-            body {
-                background-color: white;
-            }
-            .card {
-                box-shadow: none;
-                border: none;
-            }
+            .sidebar, .filters-section, .print-btn-main, .whatsapp-btn { display: none !important; }
+            .main-content { margin: 0 !important; width: 100% !important; padding: 0 !important; }
+            body { background: white !important; }
+            .card { box-shadow: none !important; border: none !important; padding: 0 !important; }
+            th { background: #eee !important; color: black !important; }
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column !important; }
+            .sidebar { position: relative !important; width: 100% !important; height: auto !important; padding: 20px !important; margin-right: 0 !important; }
+            .sidebar ul { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; justify-content: center !important; }
+            .sidebar ul li a { padding: 10px 15px !important; font-size: 14px !important; }
+            .main-content { margin-right: 0 !important; width: 100% !important; padding: 20px !important; }
+            .filters-section { flex-direction: column; align-items: stretch; }
+            .action-btn { width: 100%; }
+            #reportSection { overflow-x: auto; }
+            table { min-width: 600px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- القائمة الجانبية المحدثة باسم الدكتور -->
     <div class="sidebar">
         <h3>👨‍🏫 منصة د. أحمد رزق</h3>
         <ul>
             <li><a href="index.html">🏠 الرئيسية والإحصائيات</a></li>
             <li><a href="add_exam.html">📝 رفع امتحان جديد</a></li>
-            <li><a href="center_report.html" class="active">📊 تقارير السناتر التفصيلية</a></li>
-            <li><a href="#">📚 رفع شيتات (PDF)</a></li>
-            <li><a href="../index.html">🚪 تسجيل الخروج</a></li>
+            <li><a href="center_report.html" class="active">📊 تقارير السناتر</a></li>
+            <li><a href="settings.html">⚙️ إعدادات المنصة</a></li>
+            <li><a href="../auth/login.html">🚪 تسجيل الخروج</a></li>
         </ul>
     </div>
 
-    <!-- المحتوى الرئيسي -->
     <div class="main-content">
-        <h2>التقارير التفصيلية ومتابعة المستوى</h2>
+        <h2>📊 التقارير التفصيلية ومتابعة المستوى</h2>
 
-        <!-- أدوات اختيار التقرير (لن تظهر في الطباعة) -->
-        <div class="card filters-section" style="background-color: #eaf2f8; border-top: 4px solid #3498db;">
-            <div style="display: flex; gap: 15px; align-items: flex-end;">
-                <div style="flex: 1;">
-                    <label style="font-weight: bold; margin-bottom: 5px; display: block;">اختر السنتر:</label>
-                    <select style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
-                        <option>سنتر ألفا</option>
-                        <option>سنتر المجد</option>
-                    </select>
-                </div>
-                <div style="flex: 1;">
-                    <label style="font-weight: bold; margin-bottom: 5px; display: block;">اختر الامتحان:</label>
-                    <select style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
-                        <option>امتحان الباب الأول - فيزياء</option>
-                        <option>امتحان شامل على نصف المنهج</option>
-                    </select>
-                </div>
-                <button class="upload-btn" style="height: 42px; margin-bottom: 0;">عرض التقرير</button>
+        <!-- الفلاتر -->
+        <div class="card filters-section">
+            <div class="form-group">
+                <label>اختر الامتحان:</label>
+                <select id="examSelect">
+                    <option value="" disabled selected>جاري تحميل الامتحانات...</option>
+                </select>
             </div>
+            <div class="form-group">
+                <label>اختر السنتر:</label>
+                <select id="centerSelect">
+                    <option value="all">كل السناتر</option>
+                    <!-- سيتم تعبئتها من فايربيز -->
+                </select>
+            </div>
+            <button class="action-btn" onclick="generateReport()">🔍 عرض التقرير</button>
         </div>
         
-        <!-- قسم تقرير السنتر التفصيلي (الذي سيتم طباعته) -->
-        <div class="card" id="advancedReportSection">
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px;">
-                <h3 style="margin: 0; color: #2c3e50;">📊 تقرير: سنتر ألفا - امتحان الباب الأول</h3>
-                <button class="upload-btn info-btn print-btn" onclick="window.print()">🖨️ طباعة التقرير</button>
+        <!-- التقرير -->
+        <div class="card" id="reportSection" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f4f7fe; padding-bottom: 15px; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                <h3 style="margin: 0; color: #2b3674;" id="reportTitle">تقرير الامتحان</h3>
+                <button class="action-btn print-btn-main" onclick="window.print()">🖨️ طباعة التقرير</button>
             </div>
 
-            <!-- 1. قائمة الطلاب الذين أدوا الامتحان -->
-            <h4 style="color: #28a745; margin-bottom: 15px;">✅ الطلاب الحاضرين (مرتبين حسب النتيجة)</h4>
+            <!-- الطلاب الحاضرين -->
+            <h4 style="color: #05CD99; margin-bottom: 15px; font-size: 18px;">✅ الطلاب الحاضرين (مرتبين حسب النتيجة)</h4>
             <table>
                 <thead>
                     <tr>
                         <th>الترتيب</th>
                         <th>اسم الطالب</th>
-                        <th>درجة الامتحان الحالي</th>
-                        <th>مؤشر المستوى (متوسط درجاته السابقة)</th>
+                        <th>رقم الهاتف</th>
+                        <th>السنتر</th>
+                        <th>درجة الامتحان</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- المركز الأول -->
-                    <tr>
-                        <td>🏆 1</td>
-                        <td><strong>محمد محمود</strong></td>
-                        <td style="font-weight: bold; color: #28a745;">50/50 (100%)</td>
-                        <td style="text-align: right; width: 300px;">
-                            <div class="progress-container">
-                                <div class="progress-bar" style="background-color: #28a745; width: 95%;"></div>
-                            </div>
-                            <span style="font-size: 13px; color: #64748b;">المتوسط العام: 95% (ممتاز)</span>
-                        </td>
-                    </tr>
-                    
-                    <!-- المركز الثاني -->
-                    <tr>
-                        <td>🥈 2</td>
-                        <td><strong>كريم حسن</strong></td>
-                        <td style="font-weight: bold; color: #17a2b8;">45/50 (90%)</td>
-                        <td style="text-align: right; width: 300px;">
-                            <div class="progress-container">
-                                <div class="progress-bar" style="background-color: #17a2b8; width: 88%;"></div>
-                            </div>
-                            <span style="font-size: 13px; color: #64748b;">المتوسط العام: 88% (جيد جداً)</span>
-                        </td>
-                    </tr>
-
-                    <!-- مستوى ضعيف -->
-                    <tr>
-                        <td>🔻 3</td>
-                        <td><strong>أحمد علي</strong></td>
-                        <td style="font-weight: bold; color: #dc3545;">20/50 (40%)</td>
-                        <td style="text-align: right; width: 300px;">
-                            <div class="progress-container">
-                                <div class="progress-bar" style="background-color: #dc3545; width: 45%;"></div>
-                            </div>
-                            <span style="font-size: 13px; color: #64748b;">المتوسط العام: 45% (يحتاج متابعة)</span>
-                        </td>
-                    </tr>
+                <tbody id="attendedTableBody">
+                    <!-- سيتم التوليد هنا -->
                 </tbody>
             </table>
 
-            <!-- 2. قائمة الطلاب الغائبين -->
-            <h4 style="color: #dc3545; margin-top: 40px; border-top: 2px dashed #eee; padding-top: 20px; margin-bottom: 15px;">❌ الطلاب الغائبين (لم يؤدوا الامتحان)</h4>
-            <table style="background-color: #fff6f6;">
+            <!-- الطلاب الغائبين -->
+            <h4 style="color: #EE5D50; margin-top: 40px; border-top: 2px dashed #e0e5f2; padding-top: 20px; margin-bottom: 15px; font-size: 18px;">❌ الطلاب الغائبين</h4>
+            <table>
                 <thead>
                     <tr>
                         <th>اسم الطالب</th>
-                        <th>رقم هاتف الطالب</th>
+                        <th>رقم الهاتف</th>
+                        <th>السنتر</th>
                         <th>رقم ولي الأمر</th>
-                        <th class="print-btn">الإجراء</th>
+                        <th class="print-btn-main">إنذار سريع</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td>عمر خالد</td>
-                        <td>01122334455</td>
-                        <td>01012345678</td>
-                        <td class="print-btn">
-                            <button style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                                📱 إرسال إنذار لولي الأمر
-                            </button>
-                        </td>
-                    </tr>
+                <tbody id="absentTableBody">
+                    <!-- سيتم التوليد هنا -->
                 </tbody>
             </table>
-
         </div>
     </div>
 
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform",
+            storageBucket: "dr-ahmed-rizk-platform.appspot.com",
+            messagingSenderId: "117735726313",
+            appId: "1:117735726313:web:2a58aa1c4be7137b53e478"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let allStudents = {};
+        let allExams = {};
+
+        window.onload = () => {
+            // جلب السناتر
+            database.ref('centers').once('value').then(snapshot => {
+                const centers = snapshot.val() || ["سنتر ألفا", "سنتر المجد"];
+                const centerSelect = document.getElementById('centerSelect');
+                centers.forEach(c => centerSelect.innerHTML += `<option value="${c}">${c}</option>`);
+            });
+
+            // جلب الامتحانات
+            database.ref('exams').on('value', snapshot => {
+                if (snapshot.exists()) {
+                    allExams = snapshot.val();
+                    const examSelect = document.getElementById('examSelect');
+                    examSelect.innerHTML = '<option value="" disabled selected>-- اختر الامتحان --</option>';
+                    for (let id in allExams) {
+                        examSelect.innerHTML += `<option value="${id}">${allExams[id].name} (${allExams[id].center})</option>`;
+                    }
+                }
+            });
+
+            // جلب بيانات الطلاب وحفظها في المتغير العام لسرعة البحث
+            database.ref('students').on('value', snapshot => {
+                allStudents = snapshot.val() || {};
+            });
+        }
+
+        function generateReport() {
+            const examId = document.getElementById('examSelect').value;
+            const centerFilter = document.getElementById('centerSelect').value;
+
+            if (!examId) return alert("⚠️ يرجى اختيار امتحان أولاً.");
+
+            const selectedExam = allExams[examId];
+            const examResults = selectedExam.results || {}; 
+            
+            document.getElementById('reportTitle').innerText = `📊 تقرير: ${selectedExam.name} - ${centerFilter === 'all' ? 'كل السناتر' : centerFilter}`;
+            
+            const attendedBody = document.getElementById('attendedTableBody');
+            const absentBody = document.getElementById('absentTableBody');
+            attendedBody.innerHTML = '';
+            absentBody.innerHTML = '';
+
+            let attendedList = [];
+            let absentList = [];
+
+            // تصنيف الطلاب
+            for (let phone in allStudents) {
+                const student = allStudents[phone];
+                
+                // فلترة بالسنتر
+                if (centerFilter !== 'all' && student.center !== centerFilter) continue;
+
+                // هل الامتحان ده المفروض الطالب يمتحنه؟ (عشان لو امتحان لسنتر معين منطالبش بيه سنتر تاني)
+                if (selectedExam.center !== 'all' && selectedExam.center !== student.center) continue;
+
+                if (examResults[phone] !== undefined) {
+                    attendedList.push({
+                        name: student.name,
+                        phone: phone,
+                        center: student.center,
+                        score: examResults[phone],
+                        total: selectedExam.totalQuestions
+                    });
+                } else {
+                    absentList.push({
+                        name: student.name,
+                        phone: phone,
+                        center: student.center,
+                        parentPhone: student.parentPhone
+                    });
+                }
+            }
+
+            // ترتيب الحاضرين من الأعلى للأقل درجة
+            attendedList.sort((a, b) => b.score - a.score);
+
+            // رسم جدول الحاضرين
+            if (attendedList.length === 0) {
+                attendedBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا يوجد طلاب أدوا هذا الامتحان بعد.</td></tr>';
+            } else {
+                attendedList.forEach((st, index) => {
+                    const percentage = (st.score / st.total) * 100;
+                    let badgeClass = 'score-fail';
+                    if (percentage >= 85) badgeClass = 'score-excellent';
+                    else if (percentage >= 50) badgeClass = 'score-good';
+
+                    let rankIcon = index === 0 ? '🏆' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : '🔹'));
+
+                    attendedBody.innerHTML += `
+                        <tr>
+                            <td>${rankIcon} ${index + 1}</td>
+                            <td><strong>${st.name}</strong></td>
+                            <td>${st.phone}</td>
+                            <td>${st.center}</td>
+                            <td><span class="score-badge ${badgeClass}">${st.score} / ${st.total} (${percentage.toFixed(0)}%)</span></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // رسم جدول الغائبين
+            if (absentList.length === 0) {
+                absentBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#05CD99; font-weight:bold;">الجميع أدى الامتحان! 🎉</td></tr>';
+            } else {
+                absentList.forEach(st => {
+                    const msg = `السيد ولي أمر الطالب (${st.name})، يرجى العلم أن نجلكم تخلف عن أداء امتحان (${selectedExam.name}) على منصة د. أحمد رزق. نرجو المتابعة.`;
+                    const waLink = `https://wa.me/2${st.parentPhone}?text=${encodeURIComponent(msg)}`;
+
+                    absentBody.innerHTML += `
+                        <tr>
+                            <td><strong>${st.name}</strong></td>
+                            <td>${st.phone}</td>
+                            <td>${st.center}</td>
+                            <td>${st.parentPhone}</td>
+                            <td class="print-btn-main">
+                                <a href="${waLink}" target="_blank" class="whatsapp-btn">💬 إرسال واتساب لولي الأمر</a>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            document.getElementById('reportSection').style.display = 'block';
+        }
+    </script>
 </body>
 </html>
