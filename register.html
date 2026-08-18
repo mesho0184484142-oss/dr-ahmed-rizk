@@ -165,13 +165,24 @@
         document.getElementById('registerTitle').innerText = `🎓 إنشاء حساب - ${savedName}`;
 
         // جلب السناتر من السيرفر
+       // جلب السناتر من السيرفر (من قاعدة البيانات فقط)
         database.ref('centers').on('value', (snapshot) => {
-            const centers = snapshot.val() || ["سنتر ألفا", "سنتر المجد"]; 
             const centerSelect = document.getElementById('regCenter');
-            centerSelect.innerHTML = '<option value="" disabled selected>-- اختر السنتر التابع له --</option>';
-            centers.forEach(center => {
-                centerSelect.innerHTML += `<option value="${center}">${center}</option>`;
-            });
+            
+            if (snapshot.exists()) {
+                centerSelect.innerHTML = '<option value="" disabled selected>-- اختر السنتر التابع له --</option>';
+                const centers = snapshot.val();
+                
+                // تحويل البيانات لمصفوفة لضمان عمل forEach بدون مشاكل
+                const centersArray = Array.isArray(centers) ? centers : Object.values(centers);
+                
+                centersArray.forEach(center => {
+                    centerSelect.innerHTML += `<option value="${center}">${center}</option>`;
+                });
+            } else {
+                // في حالة عدم وجود أي سناتر مضافة في قاعدة البيانات
+                centerSelect.innerHTML = '<option value="" disabled selected>لا توجد سناتر مضافة حتى الآن</option>';
+            }
         });
 
         // منطق التسجيل
