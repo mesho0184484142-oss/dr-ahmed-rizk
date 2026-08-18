@@ -3,11 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوابة الطالب - Nova Academy</title>
-    <!-- ربط ملف التصميم الأساسي -->
+    <title>بوابة الطالب - منصة د. أحمد رزق</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- ربط ملفات التصميم الأساسية -->
     <link rel="stylesheet" href="../assets/css/style.css">
-    <!-- ربط ملف التصميم الخاص بالطالب -->
-    <link rel="stylesheet" href="../assets/css/student.css">
+    
+    <!-- مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        /* =========================================
+           🎨 التصميم الأساسي والتجاوب (موبايل + كمبيوتر)
+           ========================================= */
+        body { font-family: 'Cairo', sans-serif !important; background-color: #f4f7fe !important; color: #2b3674 !important; margin: 0 !important; display: flex !important; min-height: 100vh !important; }
+        
+        /* القائمة الجانبية للكمبيوتر */
+        .sidebar { width: 250px !important; background: #ffffff !important; box-shadow: -5px 0 20px rgba(0,0,0,0.05) !important; position: fixed !important; right: 0 !important; top: 0 !important; height: 100vh !important; padding: 30px 20px !important; z-index: 1000 !important; box-sizing: border-box !important; overflow-y: auto !important; }
+        .sidebar h3 { color: #2b3674 !important; font-weight: 800 !important; text-align: center !important; margin-bottom: 40px !important; font-size: 20px !important; }
+        .sidebar ul { list-style: none !important; padding: 0 !important; margin: 0 !important; }
+        .sidebar ul li { margin-bottom: 10px !important; }
+        .sidebar ul li a { display: block !important; padding: 12px 15px !important; color: #a3aed1 !important; text-decoration: none !important; font-weight: 700 !important; border-radius: 12px !important; transition: all 0.3s ease !important; }
+        .sidebar ul li a.active, .sidebar ul li a:hover { background: #4318FF !important; color: #ffffff !important; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2) !important; }
+        
+        /* المحتوى الرئيسي للكمبيوتر */
+        .main-content { margin-right: 250px !important; padding: 40px !important; width: calc(100% - 250px) !important; box-sizing: border-box !important; }
+        h2 { font-weight: 800; color: #2b3674; margin-bottom: 5px; font-size: 26px; margin-top: 0; }
+        
+        /* الكروت والشبكة */
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px; margin-bottom: 40px; }
+        .exam-card, .sheet-card { background: #ffffff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); text-align: center; border: 1px solid #e0e5f2; transition: transform 0.3s; }
+        .exam-card:hover, .sheet-card:hover { transform: translateY(-5px); border-color: #4318FF; }
+        .exam-card h4, .sheet-card h4 { color: #4318FF; font-size: 18px; margin-top: 0; margin-bottom: 15px; }
+        .exam-card p, .sheet-card p { color: #a3aed1; font-weight: 600; margin: 8px 0; font-size: 14px; }
+        
+        /* الأزرار */
+        .start-btn, .download-btn { background: #4318FF; color: #ffffff; border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 700; width: 100%; transition: 0.3s; margin-top: 15px; font-family: 'Cairo'; }
+        .start-btn:hover, .download-btn:hover { background: #2b3674; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .download-btn { background: #05CD99; }
+        .download-btn:hover { background: #04b082; }
+
+        /* التنبيهات */
+        .alert-box { background: rgba(238, 93, 80, 0.1); color: #EE5D50; padding: 15px 20px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #EE5D50; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .section-title { font-size: 20px; font-weight: 800; margin-bottom: 20px; color: #2b3674; }
+
+        /* =========================================
+           📱 التجاوب مع شاشات الموبايل (Mobile Responsive)
+           ========================================= */
+        @media (max-width: 768px) {
+            body { flex-direction: column !important; }
+            .sidebar { position: relative !important; width: 100% !important; height: auto !important; padding: 20px !important; box-shadow: 0 5px 15px rgba(0,0,0,0.05) !important; z-index: 10 !important; }
+            .sidebar h3 { margin-bottom: 20px !important; }
+            .sidebar ul { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; justify-content: center !important; }
+            .sidebar ul li { margin-bottom: 0 !important; }
+            .sidebar ul li a { padding: 10px 15px !important; font-size: 13px !important; }
+            .main-content { margin-right: 0 !important; width: 100% !important; padding: 20px !important; }
+            h2 { font-size: 22px; text-align: center; }
+            #studentCenter { text-align: center; }
+            .cards-grid { grid-template-columns: 1fr; gap: 15px; }
+        }
+    </style>
 </head>
 <body>
 
@@ -19,29 +75,28 @@
             <li><a href="#">📝 امتحاناتي</a></li>
             <li><a href="#">📚 المذكرات والشيتات</a></li>
             <li><a href="#">📊 تقارير الدرجات</a></li>
-            <li><a href="../auth/login.html">🚪 تسجيل الخروج</a></li>
+            <li><a href="#" onclick="logoutUser()">🚪 تسجيل الخروج</a></li>
         </ul>
     </div>
 
     <!-- المحتوى الرئيسي -->
     <div class="main-content">
-        <h2>أهلاً بك يا طالب في منصتك التعليمية 🚀</h2>
+        <h2 id="welcomeMessage">جاري تحميل البيانات... ⏳</h2>
+        <p id="studentCenter" style="color: #a3aed1; font-weight: 700; margin-bottom: 30px; font-size: 16px;"></p>
 
-        <!-- صندوق التنبيهات (لو في امتحان شغال دلوقتي) -->
+        <!-- صندوق التنبيهات -->
         <div class="alert-box">
-            <strong>تنبيه هام:</strong> لديك امتحان جديد متاح الآن! احرص على حله قبل انتهاء الوقت المسموح.
+            <span>🚨</span> <strong>تنبيه هام:</strong> لديك امتحان جديد متاح الآن! احرص على حله قبل انتهاء الوقت المسموح.
         </div>
 
         <!-- قسم الامتحانات المتاحة -->
         <div class="section-title">📝 الامتحانات المتاحة الآن</div>
         <div class="cards-grid">
-            <!-- كارت الامتحان -->
             <div class="exam-card">
                 <h4>امتحان الباب الأول</h4>
-                <p>المادة: الفيزياء</p>
+                <p>المادة: المحاسبة</p>
                 <p>المدة: 60 دقيقة</p>
                 <p>عدد الأسئلة: 20 سؤال</p>
-                <!-- الزرار ده هينقله لصفحة الامتحان الفعلية اللي هنبرمجها بعدين -->
                 <button class="start-btn" onclick="window.location.href='take_exam.html'">▶️ ابدأ الامتحان الآن</button>
             </div>
         </div>
@@ -49,7 +104,6 @@
         <!-- قسم المذكرات والشيتات -->
         <div class="section-title">📚 أحدث المذكرات والشيتات</div>
         <div class="cards-grid">
-            <!-- كارت الشيت 1 -->
             <div class="sheet-card">
                 <h4>مراجعة الباب الأول (جزء 1)</h4>
                 <p>صيغة الملف: PDF</p>
@@ -57,7 +111,6 @@
                 <button class="download-btn">⬇️ تحميل الملف</button>
             </div>
             
-            <!-- كارت الشيت 2 -->
             <div class="sheet-card">
                 <h4>ملخص أهم القوانين</h4>
                 <p>صيغة الملف: PDF</p>
@@ -67,6 +120,53 @@
         </div>
 
     </div>
+
+    <!-- ربط فايربيز والمنطق البرمجي -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform",
+            storageBucket: "dr-ahmed-rizk-platform.appspot.com",
+            messagingSenderId: "117735726313",
+            appId: "1:117735726313:web:2a58aa1c4be7137b53e478"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 1. التحقق من تسجيل الدخول وجلب بيانات الطالب
+        const currentPhone = localStorage.getItem('currentLoggedInStudent');
+
+        if (!currentPhone) {
+            // لو مفيش رقم متسجل في المتصفح، اطرده لصفحة الدخول
+            window.location.href = "../auth/login.html";
+        } else {
+            // سحب بيانات الطالب من السيرفر
+            database.ref('students/' + currentPhone).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    const studentData = snapshot.val();
+                    // تحديث الواجهة باسم الطالب وسنتره الحقيقي
+                    document.getElementById('welcomeMessage').innerText = `أهلاً بك يا بطل: ${studentData.name} 🚀`;
+                    document.getElementById('studentCenter').innerText = `📍 السنتر: ${studentData.center}`;
+                } else {
+                    // لو الرقم متسجل في المتصفح بس اتمسح من فايربيز (الدكتور حذفه مثلاً)
+                    alert("⚠️ تم إغلاق أو حذف حسابك. يرجى مراجعة الإدارة.");
+                    logoutUser();
+                }
+            }).catch(error => {
+                console.error("خطأ في الاتصال:", error);
+                document.getElementById('welcomeMessage').innerText = "حدث خطأ في الاتصال بالخادم.";
+            });
+        }
+
+        // 2. دالة تسجيل الخروج
+        function logoutUser() {
+            localStorage.removeItem('currentLoggedInStudent');
+            window.location.href = "../auth/login.html";
+        }
+    </script>
 
 </body>
 </html>
