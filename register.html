@@ -5,32 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إنشاء حساب جديد - منصة د. أحمد رزق</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    
+    <!-- مكتبات Firebase (الإصدار الثامن المتوافق) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
-        /* تنسيقات إضافية لشاشة التحقق */
-        .otp-container {
-            display: none; /* مخفية في البداية */
-            text-align: center;
-        }
+        .otp-container { display: none; text-align: center; }
         .otp-input {
-            width: 150px;
-            font-size: 24px;
-            letter-spacing: 10px;
-            text-align: center;
-            padding: 10px;
-            margin: 20px auto;
-            display: block;
-            border: 2px solid #3498db;
-            border-radius: 8px;
+            width: 150px; font-size: 24px; letter-spacing: 10px;
+            text-align: center; padding: 10px; margin: 20px auto;
+            display: block; border: 2px solid #3498db; border-radius: 8px;
+        }
+        @media (max-width: 768px) {
+            .container { width: 90% !important; margin: 20px auto !important; }
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        
-        <!-- ==============================
-             الشاشة الأولى: فورم التسجيل 
-             ============================== -->
+        <!-- شاشة التسجيل -->
         <div id="registrationFormContainer">
             <h2 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">🎓 تسجيل حساب طالب جديد</h2>
             
@@ -39,35 +34,32 @@
                     <label>اسم الطالب بالكامل:</label>
                     <input type="text" id="regFullName" placeholder="اكتب اسمك الثلاثي" required>
                 </div>
-
                 <div>
                     <label>السنتر التابع له:</label>
                     <select id="regCenter" required style="width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px;">
                         <option value="" disabled selected>-- اختر السنتر التابع له --</option>
+                        <option value="سنتر ألفا">سنتر ألفا</option>
+                        <option value="سنتر المجد">سنتر المجد</option>
                     </select>
                 </div>
-
                 <div>
                     <label>البريد الإلكتروني (سنرسل كود التحقق إليه):</label>
                     <input type="email" id="regEmail" placeholder="example@gmail.com" required>
                 </div>
-
                 <div>
                     <label>رقم هاتف الطالب (اسم المستخدم):</label>
                     <input type="tel" id="regUsername" placeholder="رقم هاتف الطالب" required>
                 </div>
-
                 <div>
                     <label>رقم هاتف ولي الأمر:</label>
                     <input type="tel" id="regParentPhone" placeholder="رقم هاتف الأب أو الأم" required>
                 </div>
-
                 <div>
                     <label>الرقم السري:</label>
                     <input type="password" id="regPassword" placeholder="اكتب رقماً سرياً قوياً" required>
                 </div>
 
-                <button type="submit" style="background-color: #28a745; margin-top: 10px;">إرسال كود التحقق ✉️</button>
+                <button type="submit" id="submitBtn" style="background-color: #28a745; margin-top: 10px;">إرسال كود التحقق ✉️</button>
                 
                 <p style="text-align: center; margin-top: 15px; font-size: 15px;">
                     لديك حساب بالفعل؟ <a href="auth/login.html" style="color: #0056b3; font-weight: bold; text-decoration: none;">تسجيل الدخول</a>
@@ -75,115 +67,130 @@
             </form>
         </div>
 
-        <!-- ==============================
-             الشاشة الثانية: التحقق بالـ OTP 
-             ============================== -->
+        <!-- شاشة الـ OTP -->
         <div id="otpFormContainer" class="otp-container">
             <h2 style="color: #2c3e50;">✉️ تأكيد البريد الإلكتروني</h2>
-            <p style="color: #64748b; margin-top: 10px;" id="otpMessage">
-                لقد أرسلنا كود تحقق مكون من 4 أرقام إلى بريدك الإلكتروني.
-            </p>
+            <p style="color: #64748b; margin-top: 10px;" id="otpMessage"></p>
             
             <form onsubmit="verifyOTP(event)">
                 <input type="text" id="otpInput" class="otp-input" maxlength="4" placeholder="----" required autocomplete="off">
-                <button type="submit" style="background-color: #3498db; width: 100%;">تأكيد الحساب</button>
+                <button type="submit" id="confirmBtn" style="background-color: #3498db; width: 100%;">تأكيد الحساب</button>
             </form>
             
             <button onclick="cancelRegistration()" style="background-color: transparent; color: #dc3545; border: none; margin-top: 15px; cursor: pointer; text-decoration: underline;">
                 إلغاء وتعديل البريد الإلكتروني
             </button>
         </div>
-
     </div>
 
     <script>
-        // متغيرات عامة لحفظ البيانات المؤقتة وكود الـ OTP
+        // ==========================================
+        // 1. إعدادات ربط فايربيز (من حسابك مباشرة)
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform",
+            storageBucket: "dr-ahmed-rizk-platform.appspot.com",
+            messagingSenderId: "117735726313",
+            appId: "1:117735726313:web:2a58aa1c4be7137b53e478"
+        };
+        
+        // تشغيل فايربيز
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
+
+        // ==========================================
+        // 2. منطق التسجيل والـ OTP
+        // ==========================================
         let generatedOTP = "";
         let pendingUserData = {};
 
-        // 1. تحميل السناتر تلقائياً
-        window.onload = function() {
-            const centerSelect = document.getElementById('regCenter');
-            const savedCenters = JSON.parse(localStorage.getItem('savedCenters')) || ["سنتر ألفا", "سنتر المجد"];
-            savedCenters.forEach(center => {
-                const opt = document.createElement('option');
-                opt.value = center;
-                opt.textContent = center;
-                centerSelect.appendChild(opt);
-            });
-        };
-
-        // 2. دالة بدء التسجيل وإرسال الـ OTP
         function initiateRegistration(event) {
             event.preventDefault(); 
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerText = "جاري التحقق من السيرفر...";
+            submitBtn.disabled = true;
 
-            // سحب البيانات من الفورم
             const username = document.getElementById('regUsername').value.trim();
             const email = document.getElementById('regEmail').value.trim();
-            
-            let students = JSON.parse(localStorage.getItem('students')) || {};
 
-            // التحقق من أن رقم الهاتف غير مسجل مسبقاً
-            if (students[username]) {
-                alert("⚠️ رقم هاتف الطالب مسجل به حساب بالفعل!");
-                return;
-            }
+            // الاتصال بقاعدة البيانات للتأكد إن الرقم مش متسجل قبل كده
+            database.ref('students/' + username).once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    alert("⚠️ رقم هاتف الطالب مسجل به حساب بالفعل!");
+                    submitBtn.innerText = "إرسال كود التحقق ✉️";
+                    submitBtn.disabled = false;
+                    return;
+                }
 
-            // حفظ البيانات مؤقتاً لحين تأكيد الـ OTP
-            pendingUserData = {
-                name: document.getElementById('regFullName').value.trim(),
-                center: document.getElementById('regCenter').value,
-                email: email,
-                parentPhone: document.getElementById('regParentPhone').value.trim(),
-                password: document.getElementById('regPassword').value,
-                username: username
-            };
+                // حفظ البيانات مؤقتاً
+                pendingUserData = {
+                    name: document.getElementById('regFullName').value.trim(),
+                    center: document.getElementById('regCenter').value,
+                    email: email,
+                    parentPhone: document.getElementById('regParentPhone').value.trim(),
+                    password: document.getElementById('regPassword').value,
+                    username: username
+                };
 
-            // إنشاء كود عشوائي من 4 أرقام (مثال: 4829)
-            generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
+                // إنشاء كود OTP
+                generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
+                alert(`[محاكاة نظام الإيميل]\nرسالة جديدة من منصة د. أحمد رزق:\n\nكود التحقق الخاص بك هو: ${generatedOTP}`);
 
-            // 🔴 محاكاة الإيميل: هنطلع رسالة للمستخدم بالكود كأنه فتح الإيميل بتاعه وشافه
-            alert(`[محاكاة نظام الإيميل]\nرسالة جديدة من منصة د. أحمد رزق:\n\nكود التحقق الخاص بك هو: ${generatedOTP}`);
-
-            // إخفاء فورم التسجيل وإظهار فورم الـ OTP
-            document.getElementById('registrationFormContainer').style.display = 'none';
-            document.getElementById('otpFormContainer').style.display = 'block';
-            document.getElementById('otpMessage').innerText = `لقد أرسلنا كود تحقق إلى البريد: ${email}`;
+                // عرض شاشة الـ OTP
+                document.getElementById('registrationFormContainer').style.display = 'none';
+                document.getElementById('otpFormContainer').style.display = 'block';
+                document.getElementById('otpMessage').innerText = `لقد أرسلنا كود تحقق إلى البريد: ${email}`;
+                
+                submitBtn.innerText = "إرسال كود التحقق ✉️";
+                submitBtn.disabled = false;
+            }).catch((error) => {
+                alert("حدث خطأ في الاتصال بالسيرفر، تأكد من اتصالك بالإنترنت.");
+                submitBtn.innerText = "إرسال كود التحقق ✉️";
+                submitBtn.disabled = false;
+            });
         }
 
-        // 3. دالة التحقق من الـ OTP
         function verifyOTP(event) {
             event.preventDefault();
-            
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.innerText = "جاري إنشاء الحساب...";
+            confirmBtn.disabled = true;
+
             const enteredOTP = document.getElementById('otpInput').value.trim();
 
             if (enteredOTP === generatedOTP) {
-                // الكود صحيح، نقوم بحفظ المستخدم في قاعدة البيانات (LocalStorage)
-                let students = JSON.parse(localStorage.getItem('students')) || {};
-                
-                // حفظ البيانات بالاسم المستخدم (رقم الهاتف)
-                students[pendingUserData.username] = {
+                // رفع البيانات على سيرفرات Firebase حقيقي
+                database.ref('students/' + pendingUserData.username).set({
                     name: pendingUserData.name,
                     center: pendingUserData.center,
                     email: pendingUserData.email,
                     parentPhone: pendingUserData.parentPhone,
-                    password: pendingUserData.password
-                };
-                
-                localStorage.setItem('students', JSON.stringify(students));
-
-                alert(`🎉 تم تأكيد البريد الإلكتروني وإنشاء الحساب بنجاح يا ${pendingUserData.name}!`);
-                window.location.href = "auth/login.html"; 
+                    password: pendingUserData.password,
+                    registerDate: new Date().toLocaleDateString('ar-EG')
+                }).then(() => {
+                    alert(`🎉 تم تأكيد البريد وإنشاء الحساب بنجاح يا ${pendingUserData.name}!`);
+                    window.location.href = "auth/login.html"; 
+                }).catch((error) => {
+                    alert("❌ حدث خطأ أثناء حفظ البيانات في السيرفر.");
+                    confirmBtn.innerText = "تأكيد الحساب";
+                    confirmBtn.disabled = false;
+                });
             } else {
                 alert("❌ كود التحقق غير صحيح، يرجى المحاولة مرة أخرى.");
+                confirmBtn.innerText = "تأكيد الحساب";
+                confirmBtn.disabled = false;
             }
         }
 
-        // 4. دالة الإلغاء للرجوع للفورم
         function cancelRegistration() {
             document.getElementById('otpFormContainer').style.display = 'none';
             document.getElementById('registrationFormContainer').style.display = 'block';
-            document.getElementById('otpInput').value = ""; // تفريغ الحقل
+            document.getElementById('otpInput').value = ""; 
         }
     </script>
 </body>
