@@ -3,359 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>أداء الامتحان - منصة د. أحمد رزق</title>
+    <title id="pageTitle">الرئيسية - منصة د. أحمد رزق</title>
     
     <!-- خطوط جوجل (Cairo) -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
     
-    <!-- مكتبات Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- سكريبت تطبيق الإعدادات المحفوظة فوراً قبل تحميل الصفحة (لمنع وميض الألوان) -->
+    <script>
+        const savedMode = localStorage.getItem('themeMode');
+        const savedColor = localStorage.getItem('primaryColor') || "#4318FF";
+        const savedName = localStorage.getItem('platformName') || "منصة د. أحمد رزق";
+        
+        if (savedMode === 'dark') document.documentElement.classList.add('dark-mode');
+        document.documentElement.style.setProperty('--primary', savedColor);
+    </script>
 
     <style>
-        /* استدعاء المتغيرات اللونية للمنصة (نفس المستخدمة في باقي الصفحات) */
+        /* =========================================
+           المتغيرات اللونية الموحدة للمنصة بالكامل
+           ========================================= */
         :root {
             --primary: #4318FF;
             --primary-hover: #2b3674;
-            --secondary: #a3aed1;
             --success: #05CD99;
-            --danger: #EE5D50;
-            --dark-text: #2b3674;
             --bg-light: #f4f7fe;
+            --text-dark: #2b3674;
+            --text-muted: #a3aed1;
             --card-bg: #ffffff;
+            --nav-bg: rgba(255, 255, 255, 0.85);
             --border-color: #e0e5f2;
         }
 
-        /* التنسيقات الأساسية */
+        /* الوضع الداكن (Dark Mode) المربوط بإعدادات لوحة التحكم */
+        html.dark-mode {
+            --bg-light: #0b1437;
+            --text-dark: #ffffff;
+            --text-muted: #8f9bba;
+            --card-bg: #111c44;
+            --nav-bg: rgba(11, 20, 55, 0.85);
+            --border-color: #1a2552;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        
         body { 
-            font-family: 'Cairo', sans-serif !important; 
-            background-color: var(--bg-light) !important; 
-            color: var(--dark-text) !important; 
-            margin: 0 !important; 
-            padding-bottom: 60px; 
-            user-select: none; /* لمنع تحديد النص والنسخ */
-        }
-        
-        /* ترويسة الامتحان (الهيدر) */
-        .exam-header { 
-            background: var(--card-bg); 
-            padding: 15px 40px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            position: sticky; 
-            top: 0; 
-            z-index: 1000; 
-            border-bottom: 4px solid var(--primary); 
-        }
-        .exam-title { font-size: 22px; font-weight: 800; color: var(--primary); }
-        .exam-timer { 
-            background: rgba(238, 93, 80, 0.1); 
-            color: var(--danger); 
-            padding: 10px 25px; 
-            border-radius: 12px; 
-            font-weight: 800; 
-            font-size: 18px; 
-            border: 2px solid var(--danger); 
-            transition: all 0.3s ease; 
-        }
-        
-        .exam-timer.danger { 
-            background: var(--danger); 
-            color: #ffffff; 
-            animation: pulse 1s infinite; 
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(238, 93, 80, 0.7); }
-            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(238, 93, 80, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(238, 93, 80, 0); }
+            background-color: var(--bg-light); 
+            color: var(--text-dark); 
+            transition: background-color 0.4s ease, color 0.4s ease; 
+            overflow-x: hidden;
         }
 
-        .exam-container { max-width: 850px; margin: 40px auto; padding: 0 20px; }
-        
-        .loader { text-align: center; margin-top: 100px; font-size: 22px; font-weight: 800; color: var(--secondary); animation: fadeIn 1s infinite alternate; }
-        @keyframes fadeIn { from { opacity: 0.5; } to { opacity: 1; } }
+        /* تأثيرات الخلفية العائمة المريحة للعين */
+        .bg-glow {
+            position: absolute;
+            width: 50vw; height: 50vw;
+            max-width: 500px; max-height: 500px;
+            background: var(--primary);
+            filter: blur(150px);
+            opacity: 0.15;
+            border-radius: 50%;
+            z-index: -1;
+            top: -10%; right: -10%;
+            animation: float 8s infinite ease-in-out alternate;
+            pointer-events: none;
+        }
 
-        /* صندوق السؤال */
-        .question-box { 
-            background: var(--card-bg); 
-            padding: 35px; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.03); 
-            margin-bottom: 30px; 
-            border: 1px solid var(--border-color); 
-            transition: transform 0.3s ease, border-color 0.3s ease; 
+        @keyframes float {
+            0% { transform: translateY(0px) scale(1); }
+            100% { transform: translateY(40px) scale(1.1); }
         }
-        .question-box:hover { border-color: var(--primary); transform: translateY(-3px); }
-        .question-box h3 { 
-            margin-top: 0; 
-            color: var(--dark-text); 
-            line-height: 1.6; 
-            font-size: 20px; 
-            border-bottom: 2px dashed var(--border-color); 
-            padding-bottom: 15px; 
-            margin-bottom: 20px; 
+
+        /* شريط التنقل (Navbar) بخاصية Glassmorphism */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 5%; background: var(--nav-bg); 
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            position: fixed; width: 100%; top: 0; z-index: 1000; 
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+            border-bottom: 1px solid var(--border-color);
         }
         
-        /* الاختيارات والتفاعلات */
-        .options-list { display: flex; flex-direction: column; gap: 15px; }
-        .option-label { 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            background: var(--bg-light); 
-            padding: 16px 20px; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
-            border: 2px solid transparent; 
-            font-weight: 700; 
-            font-size: 16px; 
-            color: var(--dark-text); 
-        }
-        .option-label:hover { background: #eef2fa; border-color: var(--secondary); transform: translateX(-5px); }
+        .logo { font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
         
-        /* تفاعل CSS الحديث عند اختيار الإجابة */
-        .option-label:has(input[type="radio"]:checked) {
-            background: rgba(67, 24, 255, 0.05); /* سيتم استبدالها برمجياً لتدعم اللون الديناميكي لاحقاً */
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-        .option-label input[type="radio"] { width: 22px; height: 22px; accent-color: var(--primary); cursor: pointer; }
+        .nav-buttons { display: flex; gap: 15px; }
         
-        /* زر التسليم النهائي */
-        .submit-exam-btn { 
-            background: linear-gradient(135deg, var(--success) 0%, #04b082 100%); 
+        .nav-buttons a {
+            text-decoration: none; padding: 12px 25px; border-radius: 12px; 
+            font-weight: 800; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 15px; display: inline-flex; align-items: center; justify-content: center;
+        }
+        
+        .btn-login { 
+            color: var(--text-dark); background: transparent; 
+            border: 2px solid var(--border-color); 
+        }
+        .btn-login:hover { 
+            border-color: var(--primary); color: var(--primary); 
+            transform: translateY(-2px); 
+        }
+        
+        .btn-register { 
+            background: linear-gradient(135deg, var(--primary) 0%, #6b4cff 100%); 
             color: white; 
-            border: none; 
-            padding: 20px; 
-            border-radius: 15px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            width: 100%; 
-            font-size: 22px; 
-            margin-top: 30px; 
-            transition: all 0.3s ease; 
-            font-family: 'Cairo'; 
-            box-shadow: 0 10px 25px rgba(5, 205, 153, 0.3); 
+            box-shadow: 0 8px 20px rgba(67, 24, 255, 0.2); border: none;
         }
-        .submit-exam-btn:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(5, 205, 153, 0.4); }
+        .btn-register:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 12px 25px rgba(67, 24, 255, 0.3); 
+        }
 
+        /* قسم الهيرو (Hero Section) */
+        .hero {
+            min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 120px 20px 60px; position: relative;
+        }
+        .hero h1 { 
+            font-size: clamp(2.5rem, 6vw, 4.5rem); 
+            margin-bottom: 20px; font-weight: 800; line-height: 1.3;
+            animation: fadeUp 0.8s ease-out forwards;
+        }
+        .hero h1 span { 
+            color: var(--primary); 
+            background: linear-gradient(135deg, var(--primary), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p { 
+            font-size: clamp(1rem, 2vw, 1.25rem); 
+            max-width: 700px; margin-bottom: 40px; 
+            color: var(--text-muted); font-weight: 600; line-height: 1.8;
+            animation: fadeUp 1s ease-out forwards; opacity: 0;
+        }
+        .hero .btn-register {
+            padding: 18px 40px; font-size: 18px; border-radius: 15px;
+            animation: fadeUp 1.2s ease-out forwards; opacity: 0;
+        }
+        
+        /* المميزات (Features) بنظام Grid */
+        .features { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 30px; padding: 0 5% 80px; max-width: 1200px; margin: 0 auto;
+        }
+        .feature-card {
+            background: var(--card-bg); padding: 40px 30px; border-radius: 24px; text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid var(--border-color);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeUp 1.4s ease-out forwards; opacity: 0;
+            position: relative; overflow: hidden;
+        }
+        .feature-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+            opacity: 0; transition: 0.4s;
+        }
+        .feature-card:hover { 
+            transform: translateY(-10px); 
+            box-shadow: 0 20px 40px rgba(67, 24, 255, 0.08); 
+            border-color: var(--primary);
+        }
+        .feature-card:hover::before { opacity: 1; }
+        
+        .feature-icon { 
+            font-size: 45px; margin-bottom: 20px; 
+            display: inline-block; padding: 15px; 
+            background: rgba(67, 24, 255, 0.05); border-radius: 20px;
+        }
+        .feature-card h3 { font-size: 20px; font-weight: 800; margin-bottom: 15px; color: var(--text-dark); }
+        .feature-card p { color: var(--text-muted); font-size: 15px; line-height: 1.6; font-weight: 600; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* =========================================
+           استجابة الشاشات (Responsive Design)
+           ========================================= */
         @media (max-width: 768px) {
-            .exam-header { flex-direction: column; gap: 15px; padding: 15px 20px; text-align: center; }
-            .exam-title { font-size: 18px; }
-            .exam-timer { width: 100%; box-sizing: border-box; }
-            .exam-container { margin: 20px auto; padding: 0 15px; }
-            .question-box { padding: 20px; border-radius: 15px; }
-            .question-box h3 { font-size: 18px; }
-            .option-label { font-size: 15px; padding: 12px 15px; }
-            .submit-exam-btn { font-size: 18px; padding: 15px; }
+            nav { 
+                flex-direction: column; padding: 15px 20px; gap: 15px; 
+                background: var(--card-bg); 
+            }
+            .nav-buttons { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .nav-buttons a { padding: 12px 10px; font-size: 14px; margin: 0; width: 100%; }
+            .hero { padding-top: 160px; } 
+            .hero h1 { font-size: 2.2rem; }
+        }
+
+        @media (max-width: 480px) {
+            .nav-buttons { grid-template-columns: 1fr; } 
+            .hero h1 { font-size: 1.8rem; }
         }
     </style>
 </head>
-<body class="exam-mode">
+<body>
 
-    <script>
-        // تطبيق إعدادات الألوان والاسم الخاصة بالمنصة قبل تحميل الـ Body بالكامل
-        const savedColor = localStorage.getItem('primaryColor') || "#4318FF";
-        const savedName = localStorage.getItem('platformName') || "منصة د. أحمد رزق";
-        document.documentElement.style.setProperty('--primary', savedColor);
-        document.title = `أداء الامتحان - ${savedName}`;
-    </script>
+    <div class="bg-glow"></div>
 
-    <div class="exam-header">
-        <div class="exam-title" id="displayExamName">📝 جاري تحميل الامتحان...</div>
-        <div class="exam-timer" id="timerDisplay">⏳ الوقت: --:--</div>
+    <nav>
+        <div class="logo" id="displayPlatformName">منصة د. أحمد رزق</div>
+        <div class="nav-buttons">
+            <a href="auth/login.html" class="btn-login">تسجيل الدخول</a>
+            <a href="register.html" class="btn-register">إنشاء حساب جديد</a>
+        </div>
+    </nav>
+
+    <div class="hero">
+        <h1 id="heroTitle">مرحباً بك في <span>منصة د. أحمد رزق</span></h1>
+        <p>نظام تعليمي متكامل يضمن لك التفوق. امتحانات ذكية، متابعة مستمرة لمستواك، وتقارير دورية لولي الأمر تساعدك على تحقيق أهدافك الأكاديمية بنجاح.</p>
+        <a href="register.html" class="nav-buttons btn-register" style="display: inline-block;">ابدأ رحلتك الآن 🚀</a>
     </div>
 
-    <div class="exam-container">
-        <div id="loader" class="loader">جاري تجهيز الأسئلة... برجاء الانتظار ⏳</div>
-        <form id="examForm" style="display: none;">
-            <!-- سيتم توليد الأسئلة هنا ديناميكياً -->
-        </form>
+    <div class="features">
+        <div class="feature-card">
+            <div class="feature-icon">📝</div>
+            <h3>امتحانات ذكية</h3>
+            <p>بنك أسئلة متطور ونظام تصحيح تلقائي مع حماية متكاملة ضد الغش لضمان التقييم العادل والمستمر للطلاب.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>تقارير تفصيلية</h3>
+            <p>اعرف مستواك الحقيقي ونقاط ضعفك بعد كل امتحان فوراً من خلال تقارير أداء رسومية دقيقة ونماذج إجابة PDF.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">👨‍👩‍👦</div>
+            <h3>متابعة أولياء الأمور</h3>
+            <p>حسابات مخصصة لأولياء الأمور لمتابعة التقييمات، وميزة الإشعارات السريعة عبر الواتساب لضمان التواصل الفعال.</p>
+        </div>
     </div>
 
+    <!-- سكريبت تحديث البيانات الديناميكية (الاسم والـ Title) -->
     <script>
-        // إعدادات Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
-            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
-            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "dr-ahmed-rizk-platform",
-            storageBucket: "dr-ahmed-rizk-platform.appspot.com",
-            messagingSenderId: "117735726313",
-            appId: "1:117735726313:web:2a58aa1c4be7137b53e478"
-        };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        const currentPhone = localStorage.getItem('currentLoggedInStudent');
-        const urlParams = new URLSearchParams(window.location.search);
-        const examId = urlParams.get('id');
-
-        let currentExamData = null;
-        let timerInterval;
-        let isSubmitting = false;
-
-        // حماية الصفحة من الدخول المباشر
-        if (!currentPhone || !examId) {
-            window.location.href = "index.html";
-        } else {
-            checkIfAlreadyTaken();
-        }
-
-        // 1. التحقق: هل الطالب امتحن قبل كده؟
-        function checkIfAlreadyTaken() {
-            database.ref(`students/${currentPhone}/results/${examId}`).once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    alert("❌ لقد قمت بأداء هذا الامتحان مسبقاً، لا يمكنك إعادته.");
-                    window.location.href = "index.html";
-                } else {
-                    fetchExamData();
-                }
-            });
-        }
-
-        // 2. جلب بيانات الامتحان من السيرفر
-        function fetchExamData() {
-            database.ref('exams/' + examId).once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    currentExamData = snapshot.val();
-                    document.getElementById('displayExamName').innerText = `📝 ${currentExamData.name}`;
-                    renderQuestions(currentExamData.questions);
-                    startTimer(currentExamData.duration);
-                } else {
-                    alert("⚠️ هذا الامتحان لم يعد متاحاً.");
-                    window.location.href = "index.html";
-                }
-            });
-        }
-
-        // 3. رسم الأسئلة
-        function renderQuestions(questions) {
-            const form = document.getElementById('examForm');
-            let htmlContent = '';
-            
-            // لتفادي أي أخطاء في مصفوفة الفايربيز
-            const questionsList = Array.isArray(questions) ? questions : Object.values(questions || {});
-
-            questionsList.forEach((q, index) => {
-                htmlContent += `
-                <div class="question-box">
-                    <h3>${index + 1}. ${q.questionText}</h3>
-                    <div class="options-list">
-                `;
-                
-                q.options.forEach((opt, optIndex) => {
-                    htmlContent += `
-                        <label class="option-label">
-                            <input type="radio" name="q${index}" value="${optIndex}"> 
-                            ${opt}
-                        </label>
-                    `;
-                });
-
-                htmlContent += `</div></div>`;
-            });
-            
-            htmlContent += `<button type="button" class="submit-exam-btn" onclick="submitExam()">📤 تسليم الامتحان النهائي</button>`;
-            
-            form.innerHTML = htmlContent;
-            document.getElementById('loader').style.display = 'none';
-            form.style.display = 'block';
-        }
-
-        // 4. العداد التنازلي
-        function startTimer(durationInMinutes) {
-            let timeInSeconds = durationInMinutes * 60;
-            const timerDisplay = document.getElementById('timerDisplay');
-
-            timerInterval = setInterval(() => {
-                timeInSeconds--;
-                const minutes = Math.floor(timeInSeconds / 60);
-                const seconds = timeInSeconds % 60;
-                const formattedSeconds = seconds < 10 ? '0' + seconds : seconds;
-                
-                timerDisplay.innerText = `⏳ الوقت المتبقي: ${minutes}:${formattedSeconds}`;
-
-                if (timeInSeconds <= 180 && !timerDisplay.classList.contains('danger')) {
-                    timerDisplay.classList.add('danger');
-                }
-
-                if (timeInSeconds <= 0) {
-                    clearInterval(timerInterval);
-                    alert("⏱️ انتهى الوقت! سيتم تسليم الامتحان تلقائياً.");
-                    submitExam();
-                }
-            }, 1000);
-        }
-
-        // 5. التصحيح ورفع النتيجة وإجابات الطالب للسيرفر
-        function submitExam() {
-            if (isSubmitting) return; 
-            isSubmitting = true;
-            clearInterval(timerInterval); 
-            
-            let score = 0;
-            let studentAnswersArray = []; // مصفوفة الإجابات
-
-            const questionsList = Array.isArray(currentExamData.questions) ? currentExamData.questions : Object.values(currentExamData.questions || {});
-            
-            questionsList.forEach((q, index) => {
-                const selectedOption = document.querySelector(`input[name="q${index}"]:checked`);
-                
-                if (selectedOption) {
-                    let answerIndex = parseInt(selectedOption.value);
-                    studentAnswersArray.push(answerIndex);
-
-                    if (answerIndex === q.correctAnswerIndex) {
-                        score++;
-                    }
-                } else {
-                    studentAnswersArray.push(null);
-                }
-            });
-
-            const resultData = {
-                examName: currentExamData.name,
-                score: score,
-                total: questionsList.length,
-                dateTaken: new Date().toLocaleString('ar-EG'),
-                answers: studentAnswersArray // حفظ إجابات الطالب لكي تظهر في الـ PDF
-            };
-
-            const updates = {};
-            updates[`students/${currentPhone}/results/${examId}`] = resultData;
-            updates[`exams/${examId}/results/${currentPhone}`] = score;
-
-            database.ref().update(updates).then(() => {
-                localStorage.setItem('studentLastResult', JSON.stringify(resultData));
-                alert(`🎉 تم تسليم الامتحان بنجاح!`);
-                window.location.href = "result.html"; 
-            }).catch(error => {
-                alert("❌ حدث خطأ أثناء إرسال النتيجة. تأكد من اتصالك بالإنترنت.");
-                isSubmitting = false;
-            });
-        }
-
-        // نظام منع الغش والمراقبة
-        document.addEventListener('contextmenu', event => event.preventDefault()); 
-        document.addEventListener('copy', event => event.preventDefault()); 
-        document.addEventListener('cut', event => event.preventDefault()); 
-        document.addEventListener('paste', event => event.preventDefault()); 
-
-        let cheatWarnings = 0;
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden' && !isSubmitting) {
-                cheatWarnings++;
-                if (cheatWarnings === 1) {
-                    alert("⚠️ تحذير: لقد قمت بالخروج من شاشة الامتحان! يرجى عدم تكرار ذلك وإلا سيتم سحب الورقة تلقائياً."); 
-                } else if (cheatWarnings >= 2) {
-                    alert("❌ تم سحب ورقة الامتحان لانتهاك قواعد المراقبة (الخروج المتكرر من الصفحة)."); 
-                    submitExam(); 
-                }
-            }
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById('displayPlatformName').innerText = savedName;
+            document.getElementById('heroTitle').innerHTML = `مرحباً بك في <span>${savedName}</span>`;
+            document.getElementById('pageTitle').innerText = `الرئيسية - ${savedName}`;
         });
     </script>
 </body>
