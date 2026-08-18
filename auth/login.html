@@ -4,27 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تسجيل الدخول - منصة د. أحمد رزق</title>
+    <!-- ربط ملف التنسيق الموحد -->
     <link rel="stylesheet" href="../assets/css/style.css">
     
     <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-    <style>
-        @media (max-width: 768px) {
-            .container { width: 90% !important; margin: 40px auto !important; }
-        }
-    </style>
 </head>
 <body>
 
-    <div class="container" style="max-width: 400px; margin: 80px auto;">
-        <h2 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">🔐 تسجيل الدخول</h2>
+    <div class="container">
+        <h2>🔐 تسجيل الدخول</h2>
         
         <form onsubmit="handleLogin(event)">
             <div>
                 <label>نوع الحساب:</label>
-                <select id="loginType" required style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px;">
+                <select id="loginType" required>
                     <option value="student">👨‍🎓 طالب</option>
                     <option value="parent">👨‍👩‍👦 ولي أمر</option>
                     <option value="admin">👨‍🏫 إدارة (دكتور / مساعد)</option>
@@ -32,29 +27,29 @@
             </div>
 
             <div>
-                <label>رقم الهاتف (أو اسم المستخدم للإدارة):</label>
-                <input type="text" id="loginUsername" placeholder="أدخل رقم الهاتف" required>
+                <label>رقم الهاتف:</label>
+                <input type="tel" id="loginUsername" placeholder="أدخل رقم الهاتف المسجل به الحساب" required autocomplete="off">
             </div>
 
             <div>
-                <label>الرقم السري (لولي الأمر: أدخل رقم هاتفك):</label>
+                <label id="passwordLabel">الرقم السري:</label>
                 <input type="password" id="loginPassword" placeholder="أدخل الرقم السري" required>
             </div>
 
-            <div style="text-align: left; margin-bottom: 15px;">
-                <a href="#" onclick="forgotPassword()" style="color: #dc3545; font-size: 14px; text-decoration: none;">هل نسيت كلمة المرور؟</a>
+            <div style="text-align: right; margin-bottom: 20px;">
+                <a href="forgot_password.html" style="color: var(--danger); font-size: 14px; font-weight: 700;">هل نسيت كلمة المرور؟</a>
             </div>
 
-            <button type="submit" id="loginBtn">دخول</button>
+            <button type="submit" id="loginBtn">تسجيل الدخول 🚀</button>
             
-            <p style="text-align: center; margin-top: 15px;">
-                ليس لديك حساب؟ <a href="../register.html" style="color: #0056b3; font-weight: bold;">إنشاء حساب طالب</a>
+            <p style="text-align: center; margin-top: 20px; font-weight: 600; font-size: 15px;">
+                ليس لديك حساب؟ <a href="../register.html">إنشاء حساب جديد</a>
             </p>
         </form>
     </div>
 
     <script>
-        // إعدادات فايربيز الخاصة بك
+        // إعدادات فايربيز الخاصة بالمنصة
         const firebaseConfig = {
             apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
             authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
@@ -70,44 +65,65 @@
         }
         const database = firebase.database();
 
+        // تغيير النص التوضيحي للرقم السري بناءً على نوع الحساب المختار
+        document.getElementById('loginType').addEventListener('change', function() {
+            const passLabel = document.getElementById('passwordLabel');
+            if (this.value === 'parent') {
+                passLabel.innerText = "رقم هاتف ولي الأمر (بمثابة الرقم السري):";
+            } else {
+                passLabel.innerText = "الرقم السري:";
+            }
+        });
+
+        // دالة الدخول الرئيسية
         function handleLogin(event) {
             event.preventDefault(); 
             const loginBtn = document.getElementById('loginBtn');
             const originalText = loginBtn.innerText;
-            loginBtn.innerText = "جاري التحقق...";
+            loginBtn.innerText = "⏳ جاري التحقق...";
             loginBtn.disabled = true;
 
             const loginType = document.getElementById('loginType').value;
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
 
-            // 1. دخول الإدارة
+            // 1. مسار الإدارة (الدكتور أو المساعدين)
             if (loginType === "admin") {
+                // الدخول الرئيسي للدكتور (بيانات ثابتة للحماية القصوى)
                 if (username === "01145114388" && password === "Ahmed987654321") {
-                    // الدخول الرئيسي للدكتور
                     window.location.href = "../dashboard/index.html";
                     return;
                 }
                 
-                // البحث في المساعدين (سنربطها بفايربيز لاحقاً، حالياً تبحث في الـ local)
-                const savedAdmins = JSON.parse(localStorage.getItem('admins')) || {};
-                if (savedAdmins[username] && savedAdmins[username] === password) {
-                    window.location.href = "../dashboard/index.html";
-                } else {
-                    alert("❌ بيانات الإدارة غير صحيحة!");
+                // البحث في المساعدين المضافين داخل Firebase
+                database.ref('admins/' + username).once('value').then((snapshot) => {
+                    if (snapshot.exists()) {
+                        const adminPass = snapshot.val();
+                        if (password === adminPass) {
+                            window.location.href = "../dashboard/index.html";
+                        } else {
+                            alert("❌ الرقم السري للمساعد غير صحيح!");
+                            resetBtn();
+                        }
+                    } else {
+                        alert("❌ هذا الرقم غير مسجل في قسم الإدارة!");
+                        resetBtn();
+                    }
+                }).catch((error) => {
+                    alert("❌ حدث خطأ في الاتصال بقاعدة البيانات.");
                     resetBtn();
-                }
-                return;
+                });
+                return; // إيقاف تنفيذ باقي الدالة لكي لا يبحث في بيانات الطلاب
             }
 
-            // 2. دخول الطالب وولي الأمر (التحقق من فايربيز)
+            // 2. مسار الطالب وولي الأمر
             database.ref('students/' + username).once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     const studentData = snapshot.val();
                     
                     if (loginType === "student") {
                         if (studentData.password === password) {
-                            // حفظ رقم الطالب الحالي لمعرفة من قام بالدخول
+                            // حفظ جلسة الطالب للوصول لبياناته داخل المنصة
                             localStorage.setItem('currentLoggedInStudent', username);
                             window.location.href = "../student/index.html";
                         } else {
@@ -118,15 +134,15 @@
                     else if (loginType === "parent") {
                         if (studentData.parentPhone === password) {
                             localStorage.setItem('currentLoggedInStudent', username);
-                            alert(`مرحباً بك يا ولي أمر الطالب (${studentData.name}). سيتم تحويلك لصفحة النتيجة.`);
+                            alert(`مرحباً بك يا ولي أمر الطالب (${studentData.name}). سيتم تحويلك لصفحة تقارير الدرجات.`);
                             window.location.href = "../student/result.html";
                         } else {
-                            alert("❌ بيانات ولي الأمر غير صحيحة! تأكد أن اسم المستخدم هو رقم الطالب، وكلمة السر هي رقم هاتفك.");
+                            alert("❌ بيانات ولي الأمر غير صحيحة! تأكد أن رقم الهاتف بالأعلى هو رقم الطالب، والرقم السري هو رقم ولي الأمر.");
                             resetBtn();
                         }
                     }
                 } else {
-                    alert("❌ رقم الهاتف غير مسجل لدينا في النظام.");
+                    alert("❌ رقم الهاتف غير مسجل لدينا في النظام كطالب.");
                     resetBtn();
                 }
             }).catch((error) => {
@@ -134,41 +150,11 @@
                 resetBtn();
             });
 
+            // دالة مساعدة لإرجاع الزر لحالته
             function resetBtn() {
                 loginBtn.innerText = originalText;
                 loginBtn.disabled = false;
             }
-        }
-
-        // 3. استرجاع كلمة المرور باستخدام فايربيز
-        function forgotPassword() {
-            const phone = prompt("أدخل رقم هاتف الطالب للبحث عن الحساب:");
-            if (!phone) return;
-
-            database.ref('students/' + phone).once('value').then((snapshot) => {
-                if (snapshot.exists()) {
-                    const studentData = snapshot.val();
-                    const email = prompt("تم العثور على الحساب. يرجى إدخال البريد الإلكتروني المرتبط به للتحقق:");
-                    
-                    if (email === studentData.email) {
-                        const newPassword = prompt("البريد الإلكتروني صحيح ✅\nأدخل كلمة المرور الجديدة:");
-                        if (newPassword && newPassword.trim() !== "") {
-                            // تحديث الباسورد في فايربيز
-                            database.ref('students/' + phone).update({
-                                password: newPassword
-                            }).then(() => {
-                                alert("🎉 تم تغيير كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول.");
-                            });
-                        } else {
-                            alert("⚠️ لم يتم إدخال كلمة مرور. تم إلغاء العملية.");
-                        }
-                    } else {
-                        alert("❌ البريد الإلكتروني غير متطابق مع الحساب المسجل!");
-                    }
-                } else {
-                    alert("❌ رقم الهاتف غير مسجل لدينا في النظام.");
-                }
-            });
         }
     </script>
 </body>
