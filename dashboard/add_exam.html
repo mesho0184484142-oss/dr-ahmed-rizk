@@ -3,63 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رفع امتحان جديد - Nova Academy</title>
+    <title>رفع امتحان جديد - منصة د. أحمد رزق</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    
+    <!-- مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        /* =========================================
+           🎨 التصميم والتجاوب 
+           ========================================= */
+        body { font-family: 'Cairo', sans-serif !important; background-color: #f4f7fe !important; color: #2b3674 !important; margin: 0 !important; display: flex !important; min-height: 100vh !important; }
+        
+        .sidebar { width: 280px !important; background: #ffffff !important; box-shadow: -5px 0 20px rgba(0,0,0,0.05) !important; position: fixed !important; right: 0 !important; top: 0 !important; height: 100vh !important; padding: 30px 20px !important; z-index: 1000 !important; overflow-y: auto !important; }
+        .sidebar h3 { color: #2b3674 !important; font-weight: 800 !important; text-align: center !important; margin-bottom: 40px !important; font-size: 22px !important; }
+        .sidebar ul { list-style: none !important; padding: 0 !important; margin: 0 !important; }
+        .sidebar ul li { margin-bottom: 10px !important; }
+        .sidebar ul li a { display: block !important; padding: 15px 20px !important; color: #a3aed1 !important; text-decoration: none !important; font-weight: 700 !important; border-radius: 12px !important; transition: 0.3s !important; }
+        .sidebar ul li a.active, .sidebar ul li a:hover { background: #4318FF !important; color: #ffffff !important; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2) !important; }
+        
+        .main-content { margin-right: 280px !important; padding: 40px !important; width: calc(100% - 280px) !important; box-sizing: border-box !important; }
+        h2 { font-weight: 800; color: #2b3674; margin-bottom: 30px; font-size: 28px; margin-top: 0; }
+        
+        .form-container { background: #ffffff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 700; margin-bottom: 10px; color: #2b3674; }
+        .form-group input, .form-group select { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #e0e5f2; background: #f4f7fe; color: #2b3674; font-weight: 600; outline: none; box-sizing: border-box; font-family: 'Cairo'; }
+        .form-group input:focus, .form-group select:focus { border-color: #4318FF; background: #ffffff; }
+
+        /* ستايل الأسئلة */
+        .questions-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f4f7fe; padding-bottom: 15px; margin-bottom: 20px; margin-top: 40px; }
+        .add-q-btn { background: #05CD99; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; }
+        .add-q-btn:hover { background: #04b082; transform: translateY(-2px); }
+        
+        .question-card { background: #f9fbfd; border: 1px solid #e0e5f2; padding: 20px; border-radius: 15px; margin-bottom: 20px; position: relative; }
+        .question-card h4 { margin-top: 0; color: #4318FF; display: flex; justify-content: space-between; align-items: center; }
+        .delete-q-btn { background: #EE5D50; color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: 'Cairo'; }
+        .q-input { width: 100%; padding: 12px; border: 1px solid #e0e5f2; border-radius: 8px; margin-bottom: 15px; font-family: 'Cairo'; font-weight: 600; }
+        
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .option-item { display: flex; align-items: center; gap: 10px; background: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid #e0e5f2; }
+        .option-item input[type="radio"] { width: 20px; height: 20px; accent-color: #05CD99; cursor: pointer; }
+        .option-item input[type="text"] { flex: 1; border: none; outline: none; background: transparent; font-family: 'Cairo'; font-weight: 600; }
+
+        .submit-btn { background: #4318FF; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; width: 100%; font-size: 18px; margin-top: 20px; transition: 0.3s; font-family: 'Cairo'; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2); }
+        .submit-btn:hover { background: #2b3674; transform: translateY(-3px); }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column !important; }
+            .sidebar { position: relative !important; width: 100% !important; height: auto !important; padding: 20px !important; box-shadow: 0 5px 15px rgba(0,0,0,0.05) !important; }
+            .sidebar ul { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; justify-content: center !important; }
+            .sidebar ul li a { padding: 10px 15px !important; font-size: 14px !important; }
+            .main-content { margin-right: 0 !important; width: 100% !important; padding: 20px !important; }
+            .options-grid { grid-template-columns: 1fr; }
+            .questions-header { flex-direction: column; gap: 15px; align-items: stretch; text-align: center; }
+        }
+    </style>
 </head>
 <body>
 
+    <!-- القائمة الجانبية -->
     <div class="sidebar">
-    <h3>👨‍🏫 منصة د. أحمد رزق</h3>
+        <h3>👨‍🏫 منصة د. أحمد رزق</h3>
         <ul>
             <li><a href="index.html">🏠 الرئيسية والإحصائيات</a></li>
             <li><a href="add_exam.html" class="active">📝 رفع امتحان جديد</a></li>
-            <li><a href="#">📚 رفع شيتات (PDF)</a></li>
-            <li><a href="#">📊 نتائج الطلاب</a></li>
-            <li><a href="settings.html">⚙️ إعدادات المنصة والمظهر</a></li>
-            <li><a href="../index.html">🚪 تسجيل الخروج</a></li>
+            <li><a href="center_report.html">📊 تقارير السناتر</a></li>
+            <li><a href="settings.html">⚙️ إعدادات المنصة</a></li>
+            <li><a href="../auth/login.html">🚪 تسجيل الخروج</a></li>
         </ul>
     </div>
 
+    <!-- المحتوى الرئيسي -->
     <div class="main-content">
-        <h2>إعداد امتحان جديد</h2>
+        <h2>📝 إعداد امتحان جديد</h2>
         
         <div class="form-container">
-            <form id="addExamForm">
-                <div class="form-group">
-                    <label>اسم الامتحان:</label>
-                    <input type="text" id="examName" placeholder="مثال: امتحان الباب الأول - فيزياء" required>
-                </div>
+            <!-- الجزء الأول: بيانات الامتحان -->
+            <div class="form-group">
+                <label>اسم الامتحان:</label>
+                <input type="text" id="examName" placeholder="مثال: امتحان الباب الأول - محاسبة" required>
+            </div>
 
-                <div class="form-group">
-                    <label>السنتر المستهدف:</label>
-                    <select id="examCenter" required>
-                        <option value="all">كل السناتر</option>
-                        <option value="center_a">سنتر ألفا</option>
-                        <option value="center_b">سنتر المجد</option>
-                        <option value="center_c">سنتر الأوائل</option>
-                    </select>
-                </div>
+            <div class="form-group">
+                <label>السنتر المستهدف:</label>
+                <select id="examCenter" required>
+                    <option value="" disabled selected>جاري تحميل السناتر...</option>
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label>عدد الأسئلة:</label>
-                    <input type="number" id="questionCount" min="1" placeholder="أدخل عدد الأسئلة" required>
-                </div>
+            <div class="form-group">
+                <label>وقت الامتحان (بالدقائق):</label>
+                <input type="number" id="examDuration" min="5" placeholder="مثال: 60" required>
+            </div>
 
-                <div class="form-group">
-                    <label>وقت الامتحان (بالدقائق):</label>
-                    <input type="number" id="examDuration" min="5" placeholder="مثال: 60" required>
-                </div>
+            <!-- الجزء الثاني: أداة بناء الأسئلة -->
+            <div class="questions-header">
+                <h3 style="margin: 0; color: #2b3674;">أسئلة الامتحان</h3>
+                <button type="button" class="add-q-btn" onclick="addQuestion()">➕ إضافة سؤال جديد</button>
+            </div>
 
-                <div class="form-group">
-                    <label>تاريخ ووقت إتاحة الامتحان:</label>
-                    <input type="datetime-local" id="examDateTime" required>
-                </div>
+            <div id="questionsContainer">
+                <!-- الأسئلة هتتضاف هنا عن طريق الجافاسكريبت -->
+            </div>
 
-                <button type="button" class="submit-btn" onclick="window.location.href='add_questions.html'">حفظ ومتابعة لإضافة الأسئلة</button>
-            </form>
+            <button type="button" class="submit-btn" id="publishBtn" onclick="publishExam()">🚀 نشر الامتحان الآن</button>
         </div>
     </div>
 
+    <!-- أكواد فايربيز والمنطق البرمجي -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform",
+            storageBucket: "dr-ahmed-rizk-platform.appspot.com",
+            messagingSenderId: "117735726313",
+            appId: "1:117735726313:web:2a58aa1c4be7137b53e478"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 1. جلب السناتر من السيرفر
+        database.ref('centers').once('value').then(snapshot => {
+            const centers = snapshot.val() || ["سنتر ألفا", "سنتر المجد"];
+            const centerSelect = document.getElementById('examCenter');
+            centerSelect.innerHTML = '<option value="all">كل السناتر</option>';
+            centers.forEach(center => {
+                centerSelect.innerHTML += `<option value="${center}">${center}</option>`;
+            });
+        });
+
+        // 2. أداة بناء الأسئلة ديناميكياً
+        let questionCount = 0;
+
+        function addQuestion() {
+            questionCount++;
+            const container = document.getElementById('questionsContainer');
+            
+            // تصميم كارت السؤال
+            const questionHTML = `
+                <div class="question-card" id="q-card-${questionCount}">
+                    <h4>السؤال رقم <span class="q-num">${questionCount}</span> 
+                        <button type="button" class="delete-q-btn" onclick="removeQuestion(${questionCount})">🗑️ حذف السؤال</button>
+                    </h4>
+                    <input type="text" class="q-input q-text" placeholder="اكتب نص السؤال هنا..." required>
+                    
+                    <p style="margin: 0 0 10px 0; font-size: 14px; color: #a3aed1; font-weight: 600;">اختر الدائرة بجوار الإجابة الصحيحة:</p>
+                    <div class="options-grid">
+                        <div class="option-item">
+                            <input type="radio" name="correct-${questionCount}" value="0" checked>
+                            <input type="text" class="q-opt" placeholder="الاختيار الأول" required>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" name="correct-${questionCount}" value="1">
+                            <input type="text" class="q-opt" placeholder="الاختيار الثاني" required>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" name="correct-${questionCount}" value="2">
+                            <input type="text" class="q-opt" placeholder="الاختيار الثالث" required>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" name="correct-${questionCount}" value="3">
+                            <input type="text" class="q-opt" placeholder="الاختيار الرابع" required>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', questionHTML);
+            updateQuestionNumbers();
+        }
+
+        function removeQuestion(id) {
+            const card = document.getElementById(`q-card-${id}`);
+            if (card) {
+                card.remove();
+                updateQuestionNumbers();
+            }
+        }
+
+        function updateQuestionNumbers() {
+            const cards = document.querySelectorAll('.question-card');
+            cards.forEach((card, index) => {
+                card.querySelector('.q-num').innerText = index + 1;
+            });
+        }
+
+        // إضافة سؤال افتراضي أول ما الصفحة تفتح
+        window.onload = () => { addQuestion(); };
+
+        // 3. تجميع البيانات ورفع الامتحان لفايربيز
+        function publishExam() {
+            const publishBtn = document.getElementById('publishBtn');
+            const name = document.getElementById('examName').value.trim();
+            const center = document.getElementById('examCenter').value;
+            const duration = document.getElementById('examDuration').value;
+
+            if (!name || !duration) return alert('⚠️ يرجى كتابة اسم الامتحان وتحديد وقته.');
+
+            const qCards = document.querySelectorAll('.question-card');
+            if (qCards.length === 0) return alert('⚠️ يجب إضافة سؤال واحد على الأقل للامتحان.');
+
+            let questions = [];
+            let isValid = true;
+
+            qCards.forEach((card, index) => {
+                const text = card.querySelector('.q-text').value.trim();
+                const opts = Array.from(card.querySelectorAll('.q-opt')).map(opt => opt.value.trim());
+                const correctRadio = card.querySelector('input[type="radio"]:checked');
+                
+                // التأكد إن مفيش حقول فاضية
+                if (!text || opts.some(o => o === "")) {
+                    isValid = false;
+                }
+
+                questions.push({
+                    questionText: text,
+                    options: opts,
+                    correctAnswerIndex: parseInt(correctRadio.value)
+                });
+            });
+
+            if (!isValid) return alert('⚠️ يرجى إكمال جميع نصوص الأسئلة والاختيارات قبل النشر.');
+
+            // الاستعداد للرفع
+            publishBtn.innerText = "⏳ جاري الرفع على السيرفر...";
+            publishBtn.disabled = true;
+
+            // إنشاء مرجع جديد في فايربيز (ID عشوائي للامتحان)
+            const newExamRef = database.ref('exams').push();
+            
+            const examData = {
+                id: newExamRef.key,
+                name: name,
+                center: center,
+                duration: parseInt(duration),
+                questions: questions,
+                totalQuestions: questions.length,
+                publishDate: new Date().toLocaleString('ar-EG'),
+                status: "active" // الامتحان متاح للطلاب
+            };
+
+            newExamRef.set(examData).then(() => {
+                alert('🎉 تم رفع الامتحان بنجاح وهو الآن متاح للطلاب!');
+                window.location.href = 'index.html'; // الرجوع للوحة الرئيسية
+            }).catch(error => {
+                alert('❌ حدث خطأ أثناء رفع الامتحان، حاول مرة أخرى.');
+                publishBtn.innerText = "🚀 نشر الامتحان الآن";
+                publishBtn.disabled = false;
+            });
+        }
+    </script>
 </body>
 </html>
