@@ -4,21 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إنشاء حساب جديد - منصة د. أحمد رزق</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
     
-    <!-- مكتبات Firebase (الإصدار الثامن المتوافق) -->
+    <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
+        body { font-family: 'Cairo', sans-serif !important; background-color: #f4f7fe; color: #2b3674; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+        
+        .container { background: #ffffff; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 500px; border: 1px solid #e0e5f2; }
+        
+        h2 { font-weight: 800; color: #4318FF; text-align: center; margin-bottom: 30px; font-size: 24px; margin-top: 0; }
+        
+        label { font-weight: 700; margin-bottom: 8px; display: block; color: #2b3674; font-size: 14px; }
+        
+        input, select { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #e0e5f2; background: #f9fbfd; color: #2b3674; font-family: 'Cairo', sans-serif; font-weight: 600; margin-bottom: 20px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus, select:focus { border-color: #4318FF; background: #ffffff; box-shadow: 0 0 0 3px rgba(67, 24, 255, 0.1); }
+        
+        button { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: 800; font-family: 'Cairo', sans-serif; font-size: 16px; cursor: pointer; transition: 0.3s; color: white; display: block; }
+        .btn-submit { background: #4318FF; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2); }
+        .btn-submit:hover { background: #2b3674; transform: translateY(-2px); }
+        
+        .btn-cancel { background: transparent; color: #EE5D50; margin-top: 15px; border: 2px solid #EE5D50; box-shadow: none; }
+        .btn-cancel:hover { background: #EE5D50; color: white; }
+
         .otp-container { display: none; text-align: center; }
-        .otp-input {
-            width: 150px; font-size: 24px; letter-spacing: 10px;
-            text-align: center; padding: 10px; margin: 20px auto;
-            display: block; border: 2px solid #3498db; border-radius: 8px;
-        }
+        .otp-input { width: 100%; font-size: 30px; letter-spacing: 20px; text-align: center; padding: 15px; color: #4318FF; font-weight: 800; background: #f4f7fe; }
+        
+        .login-link { text-align: center; margin-top: 20px; font-size: 15px; font-weight: 600; color: #a3aed1; }
+        .login-link a { color: #4318FF; font-weight: 800; text-decoration: none; transition: 0.3s; }
+        .login-link a:hover { color: #2b3674; text-decoration: underline; }
+
         @media (max-width: 768px) {
-            .container { width: 90% !important; margin: 20px auto !important; }
+            .container { padding: 30px 20px; }
+            h2 { font-size: 22px; }
+            input, select { padding: 12px; }
+            .otp-input { font-size: 24px; letter-spacing: 15px; }
         }
     </style>
 </head>
@@ -27,66 +49,53 @@
     <div class="container">
         <!-- شاشة التسجيل -->
         <div id="registrationFormContainer">
-            <h2 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">🎓 تسجيل حساب طالب جديد</h2>
+            <h2>🎓 إنشاء حساب جديد</h2>
             
             <form onsubmit="initiateRegistration(event)">
-                <div>
-                    <label>اسم الطالب بالكامل:</label>
-                    <input type="text" id="regFullName" placeholder="اكتب اسمك الثلاثي" required>
-                </div>
-                <div>
-                    <label>السنتر التابع له:</label>
-                    <select id="regCenter" required style="width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px;">
-                        <option value="" disabled selected>-- اختر السنتر التابع له --</option>
-                        <option value="سنتر ألفا">سنتر ألفا</option>
-                        <option value="سنتر المجد">سنتر المجد</option>
-                    </select>
-                </div>
-                <div>
-                    <label>البريد الإلكتروني (سنرسل كود التحقق إليه):</label>
-                    <input type="email" id="regEmail" placeholder="example@gmail.com" required>
-                </div>
-                <div>
-                    <label>رقم هاتف الطالب (اسم المستخدم):</label>
-                    <input type="tel" id="regUsername" placeholder="رقم هاتف الطالب" required>
-                </div>
-                <div>
-                    <label>رقم هاتف ولي الأمر:</label>
-                    <input type="tel" id="regParentPhone" placeholder="رقم هاتف الأب أو الأم" required>
-                </div>
-                <div>
-                    <label>الرقم السري:</label>
-                    <input type="password" id="regPassword" placeholder="اكتب رقماً سرياً قوياً" required>
-                </div>
+                <label>اسم الطالب بالكامل:</label>
+                <input type="text" id="regFullName" placeholder="اكتب اسمك الثلاثي" required>
 
-                <button type="submit" id="submitBtn" style="background-color: #28a745; margin-top: 10px;">إرسال كود التحقق ✉️</button>
+                <label>السنتر التابع له:</label>
+                <select id="regCenter" required>
+                    <option value="" disabled selected>جاري تحميل السناتر...</option>
+                </select>
+
+                <label>البريد الإلكتروني (لتلقي كود التحقق):</label>
+                <input type="email" id="regEmail" placeholder="example@gmail.com" required>
+
+                <label>رقم هاتف الطالب (اسم المستخدم):</label>
+                <input type="tel" id="regUsername" placeholder="مثال: 01xxxxxxxxx" required>
+
+                <label>رقم هاتف ولي الأمر:</label>
+                <input type="tel" id="regParentPhone" placeholder="للتواصل في حالة الغياب" required>
+
+                <label>الرقم السري:</label>
+                <input type="password" id="regPassword" placeholder="اكتب رقماً سرياً قوياً" required>
+
+                <button type="submit" id="submitBtn" class="btn-submit">إرسال كود التحقق ✉️</button>
                 
-                <p style="text-align: center; margin-top: 15px; font-size: 15px;">
-                    لديك حساب بالفعل؟ <a href="auth/login.html" style="color: #0056b3; font-weight: bold; text-decoration: none;">تسجيل الدخول</a>
-                </p>
+                <div class="login-link">
+                    لديك حساب بالفعل؟ <a href="auth/login.html">تسجيل الدخول</a>
+                </div>
             </form>
         </div>
 
         <!-- شاشة الـ OTP -->
         <div id="otpFormContainer" class="otp-container">
-            <h2 style="color: #2c3e50;">✉️ تأكيد البريد الإلكتروني</h2>
-            <p style="color: #64748b; margin-top: 10px;" id="otpMessage"></p>
+            <h2>✉️ تأكيد البريد الإلكتروني</h2>
+            <p style="color: #a3aed1; font-weight: 600; margin-bottom: 25px;" id="otpMessage"></p>
             
             <form onsubmit="verifyOTP(event)">
                 <input type="text" id="otpInput" class="otp-input" maxlength="4" placeholder="----" required autocomplete="off">
-                <button type="submit" id="confirmBtn" style="background-color: #3498db; width: 100%;">تأكيد الحساب</button>
+                <button type="submit" id="confirmBtn" class="btn-submit">تأكيد وإنشاء الحساب</button>
             </form>
             
-            <button onclick="cancelRegistration()" style="background-color: transparent; color: #dc3545; border: none; margin-top: 15px; cursor: pointer; text-decoration: underline;">
-                إلغاء وتعديل البريد الإلكتروني
-            </button>
+            <button onclick="cancelRegistration()" class="btn-cancel">إلغاء وتعديل البريد</button>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // 1. إعدادات ربط فايربيز (من حسابك مباشرة)
-        // ==========================================
+        // إعدادات فايربيز
         const firebaseConfig = {
             apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
             authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
@@ -97,42 +106,34 @@
             appId: "1:117735726313:web:2a58aa1c4be7137b53e478"
         };
         
-        // تشغيل فايربيز
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const database = firebase.database();
-// ==========================================
-        // 0. جلب السناتر من السيرفر وعرضها للطلاب
-        // ==========================================
+
+        // جلب السناتر من السيرفر
         database.ref('centers').on('value', (snapshot) => {
-            const centers = snapshot.val() || ["سنتر ألفا", "سنتر المجد"]; // لو مفيش، هيعرض دول كافتراضي
+            const centers = snapshot.val() || ["سنتر ألفا", "سنتر المجد"]; 
             const centerSelect = document.getElementById('regCenter');
-            
-            // تفريغ القائمة القديمة والاحتفاظ بالخيار الأول فقط
             centerSelect.innerHTML = '<option value="" disabled selected>-- اختر السنتر التابع له --</option>';
-            
-            // وضع السناتر اللي راجعة من السيرفر
             centers.forEach(center => {
                 centerSelect.innerHTML += `<option value="${center}">${center}</option>`;
             });
         });
-        // ==========================================
-        // 2. منطق التسجيل والـ OTP
-        // ==========================================
+
+        // منطق التسجيل
         let generatedOTP = "";
         let pendingUserData = {};
 
         function initiateRegistration(event) {
             event.preventDefault(); 
             const submitBtn = document.getElementById('submitBtn');
-            submitBtn.innerText = "جاري التحقق من السيرفر...";
+            submitBtn.innerText = "⏳ جاري التحقق...";
             submitBtn.disabled = true;
 
             const username = document.getElementById('regUsername').value.trim();
             const email = document.getElementById('regEmail').value.trim();
 
-            // الاتصال بقاعدة البيانات للتأكد إن الرقم مش متسجل قبل كده
             database.ref('students/' + username).once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     alert("⚠️ رقم هاتف الطالب مسجل به حساب بالفعل!");
@@ -141,7 +142,6 @@
                     return;
                 }
 
-                // حفظ البيانات مؤقتاً
                 pendingUserData = {
                     name: document.getElementById('regFullName').value.trim(),
                     center: document.getElementById('regCenter').value,
@@ -151,19 +151,17 @@
                     username: username
                 };
 
-                // إنشاء كود OTP
                 generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
-                alert(`[محاكاة نظام الإيميل]\nرسالة جديدة من منصة د. أحمد رزق:\n\nكود التحقق الخاص بك هو: ${generatedOTP}`);
+                alert(`[تنبيه للمطور]\nكود التحقق الخاص بك هو: ${generatedOTP}`);
 
-                // عرض شاشة الـ OTP
                 document.getElementById('registrationFormContainer').style.display = 'none';
                 document.getElementById('otpFormContainer').style.display = 'block';
-                document.getElementById('otpMessage').innerText = `لقد أرسلنا كود تحقق إلى البريد: ${email}`;
+                document.getElementById('otpMessage').innerText = `أرسلنا كود تحقق إلى: ${email}`;
                 
                 submitBtn.innerText = "إرسال كود التحقق ✉️";
                 submitBtn.disabled = false;
             }).catch((error) => {
-                alert("حدث خطأ في الاتصال بالسيرفر، تأكد من اتصالك بالإنترنت.");
+                alert("❌ حدث خطأ في الاتصال بالسيرفر.");
                 submitBtn.innerText = "إرسال كود التحقق ✉️";
                 submitBtn.disabled = false;
             });
@@ -172,13 +170,12 @@
         function verifyOTP(event) {
             event.preventDefault();
             const confirmBtn = document.getElementById('confirmBtn');
-            confirmBtn.innerText = "جاري إنشاء الحساب...";
+            confirmBtn.innerText = "⏳ جاري الإنشاء...";
             confirmBtn.disabled = true;
 
             const enteredOTP = document.getElementById('otpInput').value.trim();
 
             if (enteredOTP === generatedOTP) {
-                // رفع البيانات على سيرفرات Firebase حقيقي
                 database.ref('students/' + pendingUserData.username).set({
                     name: pendingUserData.name,
                     center: pendingUserData.center,
@@ -187,16 +184,16 @@
                     password: pendingUserData.password,
                     registerDate: new Date().toLocaleDateString('ar-EG')
                 }).then(() => {
-                    alert(`🎉 تم تأكيد البريد وإنشاء الحساب بنجاح يا ${pendingUserData.name}!`);
+                    alert(`🎉 تم إنشاء الحساب بنجاح! مرحباً بك يا ${pendingUserData.name}`);
                     window.location.href = "auth/login.html"; 
                 }).catch((error) => {
-                    alert("❌ حدث خطأ أثناء حفظ البيانات في السيرفر.");
-                    confirmBtn.innerText = "تأكيد الحساب";
+                    alert("❌ حدث خطأ أثناء حفظ البيانات.");
+                    confirmBtn.innerText = "تأكيد وإنشاء الحساب";
                     confirmBtn.disabled = false;
                 });
             } else {
-                alert("❌ كود التحقق غير صحيح، يرجى المحاولة مرة أخرى.");
-                confirmBtn.innerText = "تأكيد الحساب";
+                alert("❌ كود التحقق غير صحيح!");
+                confirmBtn.innerText = "تأكيد وإنشاء الحساب";
                 confirmBtn.disabled = false;
             }
         }
