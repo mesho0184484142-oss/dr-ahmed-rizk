@@ -1,5 +1,22 @@
-/* assets/css/style.css */
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+/* =========================================
+   ملف التصميم الأساسي المشترك (Global Styles & Auth Forms)
+   تم التحديث: توحيد الهوية البصرية + دعم الهواتف + حركات تفاعلية
+========================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+
+/* متغيرات الألوان الموحدة للمنصة بالكامل */
+:root {
+    --primary: #4318FF;
+    --primary-hover: #2b3674;
+    --secondary: #a3aed1;
+    --success: #05CD99;
+    --danger: #EE5D50;
+    --dark-text: #2b3674;
+    --bg-light: #f4f7fe;
+    --card-bg: #ffffff;
+    --border-color: #e0e5f2;
+}
 
 * {
     box-sizing: border-box;
@@ -7,76 +24,165 @@
 }
 
 body {
-    background-color: #f4f7f6;
-    color: #333;
+    background-color: var(--bg-light);
+    color: var(--dark-text);
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     margin: 0;
+    direction: rtl; /* ضبط اتجاه اللغة العربية افتراضياً */
 }
 
+/* =========================================
+   حاوية النماذج (Login, Register, etc.)
+========================================= */
 .container {
-    background-color: #ffffff;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background-color: var(--card-bg);
+    padding: 40px;
+    border-radius: 20px; /* حواف ناعمة عصرية */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); /* ظل ناعم وواسع */
     width: 100%;
-    max-width: 500px;
-    border-top: 5px solid #0056b3; /* الأزرق */
+    max-width: 450px;
+    border: 1px solid var(--border-color);
+    /* حركة الدخول الناعمة */
+    animation: fadeUp 0.6s ease-out forwards;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 h2 {
     text-align: center;
-    color: #0056b3; /* الأزرق */
-    margin-bottom: 25px;
+    color: var(--primary);
+    margin-bottom: 30px;
+    margin-top: 0;
+    font-weight: 800;
+    font-size: 24px;
 }
 
+/* =========================================
+   المدخلات (Inputs & Labels)
+========================================= */
 form div {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 label {
     display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-    color: #2c3e50;
+    margin-bottom: 8px;
+    font-weight: 700;
+    color: var(--dark-text);
+    font-size: 15px;
 }
 
 input, select {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-light);
+    color: var(--dark-text);
+    font-family: 'Cairo', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
     outline: none;
-    transition: border-color 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 input:focus, select:focus {
-    border-color: #0056b3; /* الأزرق عند التركيز */
+    border-color: var(--primary);
+    background: var(--card-bg);
+    box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1);
 }
 
+/* =========================================
+   الأزرار (Buttons)
+========================================= */
 button {
     width: 100%;
-    padding: 12px;
-    background-color: #ff7f50; /* البرتقالي */
+    padding: 15px;
+    background: linear-gradient(135deg, var(--primary) 0%, #6b4cff 100%);
     color: white;
     border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: bold;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 800;
+    font-family: 'Cairo', sans-serif;
     cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 10px;
+    transition: all 0.3s ease;
+    margin-top: 15px;
+    box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2);
 }
 
 button:hover {
-    background-color: #e0693d; /* برتقالي داكن عند المرور */
+    transform: translateY(-3px);
+    box-shadow: 0 15px 25px rgba(67, 24, 255, 0.3);
 }
 
+button:disabled {
+    background: var(--secondary);
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* =========================================
+   قسم التحقق (OTP / Verification)
+========================================= */
 #verificationSection {
-    background-color: #eaf2f8;
-    padding: 15px;
-    border-radius: 5px;
-    border: 1px dashed #0056b3;
+    background-color: rgba(67, 24, 255, 0.05);
+    padding: 20px;
+    border-radius: 15px;
+    border: 2px dashed var(--primary);
+    margin-top: 20px;
+    text-align: center;
+}
+
+#verificationSection p {
+    color: var(--dark-text);
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+/* الروابط والنصوص الإضافية */
+a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 700;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+/* =========================================
+   التجاوب مع الشاشات (Responsive)
+========================================= */
+@media (max-width: 768px) {
+    .container {
+        padding: 30px 20px;
+        width: 90%;
+        max-width: 100%;
+        margin: 20px auto;
+        border-radius: 15px;
+    }
+    
+    h2 {
+        font-size: 22px;
+    }
+    
+    input, select {
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    button {
+        padding: 12px;
+        font-size: 16px;
+    }
 }
