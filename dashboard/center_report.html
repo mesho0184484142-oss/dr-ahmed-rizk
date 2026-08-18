@@ -6,68 +6,84 @@
     <title>تقرير السنتر التفصيلي - منصة د. أحمد رزق</title>
     <!-- ربط ملفات التصميم -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
     
     <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        body { font-family: 'Cairo', sans-serif !important; background-color: #f4f7fe !important; color: #2b3674 !important; margin: 0 !important; display: flex !important; min-height: 100vh !important; }
+        /* تنسيقات إضافية خاصة بصفحة التقارير */
+        .filters-section { 
+            display: flex; 
+            gap: 20px; 
+            align-items: flex-end; 
+            flex-wrap: wrap; 
+            background: var(--bg-light); 
+            border: none; 
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+        }
         
-        .sidebar { width: 280px !important; background: #ffffff !important; box-shadow: -5px 0 20px rgba(0,0,0,0.05) !important; position: fixed !important; right: 0 !important; top: 0 !important; height: 100vh !important; padding: 30px 20px !important; z-index: 1000 !important; overflow-y: auto !important; }
-        .sidebar h3 { color: #2b3674 !important; font-weight: 800 !important; text-align: center !important; margin-bottom: 40px !important; font-size: 22px !important; }
-        .sidebar ul { list-style: none !important; padding: 0 !important; margin: 0 !important; }
-        .sidebar ul li { margin-bottom: 10px !important; }
-        .sidebar ul li a { display: block !important; padding: 15px 20px !important; color: #a3aed1 !important; text-decoration: none !important; font-weight: 700 !important; border-radius: 12px !important; transition: 0.3s !important; }
-        .sidebar ul li a.active, .sidebar ul li a:hover { background: #4318FF !important; color: #ffffff !important; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2) !important; }
-        
-        .main-content { margin-right: 280px !important; padding: 40px !important; width: calc(100% - 280px) !important; box-sizing: border-box !important; }
-        h2 { font-weight: 800; color: #2b3674; margin-bottom: 30px; font-size: 28px; margin-top: 0; }
+        .form-group { 
+            flex: 1; 
+            min-width: 200px; 
+            margin-bottom: 0; 
+        }
 
-        .card { background: #ffffff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 30px; border: 1px solid #e0e5f2; }
+        .action-btn { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 15px 30px; 
+            border-radius: 12px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            font-family: 'Cairo', sans-serif; 
+            height: 52px; 
+            box-shadow: 0 5px 15px rgba(67, 24, 255, 0.2);
+        }
+        .action-btn:hover { 
+            background: var(--primary-hover); 
+            transform: translateY(-2px); 
+        }
         
-        .filters-section { display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; background: #f4f7fe; border: none; }
-        .form-group { flex: 1; min-width: 200px; margin-bottom: 0; }
-        label { font-weight: 700; color: #2b3674; margin-bottom: 10px; display: block; }
-        select { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #e0e5f2; background: #ffffff; color: #2b3674; font-weight: 600; outline: none; font-family: 'Cairo'; }
-        
-        .action-btn { background: #4318FF; color: white; border: none; padding: 15px 30px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; height: 52px; }
-        .action-btn:hover { background: #2b3674; transform: translateY(-2px); }
-        .print-btn-main { background: #05CD99; }
+        .print-btn-main { background: var(--success); box-shadow: 0 5px 15px rgba(5, 205, 153, 0.2); }
         .print-btn-main:hover { background: #04b082; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-        th { background: #f4f7fe; color: #a3aed1; font-weight: 700; padding: 15px; text-align: right; }
-        td { padding: 15px; border-bottom: 1px solid #f4f7fe; color: #2b3674; font-weight: 600; }
-        tr:hover td { background: #f9fbfd; }
+        /* تنسيقات الواتساب */
+        .whatsapp-btn { 
+            background: #25D366; 
+            color: white; 
+            border: none; 
+            padding: 8px 15px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 700; 
+            font-family: 'Cairo', sans-serif; 
+            font-size: 13px; 
+            text-decoration: none; 
+            display: inline-block; 
+            transition: 0.3s;
+        }
+        .whatsapp-btn:hover { background: #128C7E; transform: translateY(-2px); }
 
-        .score-badge { padding: 5px 12px; border-radius: 20px; font-weight: 800; font-size: 14px; }
-        .score-excellent { background: rgba(5, 205, 153, 0.1); color: #05CD99; }
-        .score-good { background: rgba(67, 24, 255, 0.1); color: #4318FF; }
-        .score-fail { background: rgba(238, 93, 80, 0.1); color: #EE5D50; }
-
-        .whatsapp-btn { background: #25D366; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 700; font-family: 'Cairo'; font-size: 13px; text-decoration: none; display: inline-block; }
-        .whatsapp-btn:hover { background: #128C7E; }
-
-        @media print {
-            .sidebar, .filters-section, .print-btn-main, .whatsapp-btn { display: none !important; }
-            .main-content { margin: 0 !important; width: 100% !important; padding: 0 !important; }
-            body { background: white !important; }
-            .card { box-shadow: none !important; border: none !important; padding: 0 !important; }
-            th { background: #eee !important; color: black !important; }
+        /* ترتيب العناوين فوق الجداول */
+        .table-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         @media (max-width: 768px) {
-            body { flex-direction: column !important; }
-            .sidebar { position: relative !important; width: 100% !important; height: auto !important; padding: 20px !important; margin-right: 0 !important; }
-            .sidebar ul { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; justify-content: center !important; }
-            .sidebar ul li a { padding: 10px 15px !important; font-size: 14px !important; }
-            .main-content { margin-right: 0 !important; width: 100% !important; padding: 20px !important; }
             .filters-section { flex-direction: column; align-items: stretch; }
             .action-btn { width: 100%; }
-            #reportSection { overflow-x: auto; }
-            table { min-width: 600px; }
+            #reportSection { overflow-x: auto; padding: 15px; }
         }
     </style>
 </head>
@@ -78,8 +94,7 @@
         <ul>
             <li><a href="index.html">🏠 الرئيسية والإحصائيات</a></li>
             <li><a href="add_exam.html">📝 رفع امتحان جديد</a></li>
-            <li><a href="center_report.html">📊 تقارير السناتر</a></li>
-            <li><a href="manage_students.html">👥 إدارة الطلاب</a></li> <!-- الزرار الجديد أهو 🚀 -->
+            <li><a href="center_report.html" class="active">📊 تقارير السناتر</a></li>
             <li><a href="settings.html">⚙️ إعدادات المنصة</a></li>
             <li><a href="../auth/login.html">🚪 تسجيل الخروج</a></li>
         </ul>
@@ -89,7 +104,7 @@
         <h2>📊 التقارير التفصيلية ومتابعة المستوى</h2>
 
         <!-- الفلاتر -->
-        <div class="card filters-section">
+        <div class="filters-section">
             <div class="form-group">
                 <label>اختر الامتحان:</label>
                 <select id="examSelect">
@@ -108,13 +123,13 @@
         
         <!-- التقرير -->
         <div class="card" id="reportSection" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f4f7fe; padding-bottom: 15px; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
-                <h3 style="margin: 0; color: #2b3674;" id="reportTitle">تقرير الامتحان</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--bg-light); padding-bottom: 15px; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                <h3 style="margin: 0; color: var(--dark-text);" id="reportTitle">تقرير الامتحان</h3>
                 <button class="action-btn print-btn-main" onclick="window.print()">🖨️ طباعة التقرير</button>
             </div>
 
             <!-- الطلاب الحاضرين -->
-            <h4 style="color: #05CD99; margin-bottom: 15px; font-size: 18px;">✅ الطلاب الحاضرين (مرتبين حسب النتيجة)</h4>
+            <h4 class="table-title" style="color: var(--success);">✅ الطلاب الحاضرين (مرتبين حسب النتيجة)</h4>
             <table>
                 <thead>
                     <tr>
@@ -131,7 +146,7 @@
             </table>
 
             <!-- الطلاب الغائبين -->
-            <h4 style="color: #EE5D50; margin-top: 40px; border-top: 2px dashed #e0e5f2; padding-top: 20px; margin-bottom: 15px; font-size: 18px;">❌ الطلاب الغائبين</h4>
+            <h4 class="table-title" style="color: var(--danger); margin-top: 40px; border-top: 2px dashed var(--border-color); padding-top: 20px;">❌ الطلاب الغائبين</h4>
             <table>
                 <thead>
                     <tr>
@@ -186,7 +201,7 @@
                 }
             });
 
-            // جلب بيانات الطلاب وحفظها في المتغير العام لسرعة البحث
+            // جلب بيانات الطلاب وحفظها
             database.ref('students').on('value', snapshot => {
                 allStudents = snapshot.val() || {};
             });
@@ -218,7 +233,7 @@
                 // فلترة بالسنتر
                 if (centerFilter !== 'all' && student.center !== centerFilter) continue;
 
-                // هل الامتحان ده المفروض الطالب يمتحنه؟ (عشان لو امتحان لسنتر معين منطالبش بيه سنتر تاني)
+                // هل الامتحان ده المفروض الطالب يمتحنه؟
                 if (selectedExam.center !== 'all' && selectedExam.center !== student.center) continue;
 
                 if (examResults[phone] !== undefined) {
@@ -248,9 +263,9 @@
             } else {
                 attendedList.forEach((st, index) => {
                     const percentage = (st.score / st.total) * 100;
-                    let badgeClass = 'score-fail';
-                    if (percentage >= 85) badgeClass = 'score-excellent';
-                    else if (percentage >= 50) badgeClass = 'score-good';
+                    let badgeClass = 'status-fail';
+                    if (percentage >= 85) badgeClass = 'status-pass';
+                    else if (percentage >= 50) badgeClass = 'status-pass'; // يمكن تخصيص لون ثالث للمتوسط لاحقاً
 
                     let rankIcon = index === 0 ? '🏆' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : '🔹'));
 
@@ -260,7 +275,7 @@
                             <td><strong>${st.name}</strong></td>
                             <td>${st.phone}</td>
                             <td>${st.center}</td>
-                            <td><span class="score-badge ${badgeClass}">${st.score} / ${st.total} (${percentage.toFixed(0)}%)</span></td>
+                            <td><span class="${badgeClass}">${st.score} / ${st.total} (${percentage.toFixed(0)}%)</span></td>
                         </tr>
                     `;
                 });
@@ -268,7 +283,7 @@
 
             // رسم جدول الغائبين
             if (absentList.length === 0) {
-                absentBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#05CD99; font-weight:bold;">الجميع أدى الامتحان! 🎉</td></tr>';
+                absentBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--success); font-weight:bold;">الجميع أدى الامتحان! 🎉</td></tr>';
             } else {
                 absentList.forEach(st => {
                     const msg = `السيد ولي أمر الطالب (${st.name})، يرجى العلم أن نجلكم تخلف عن أداء امتحان (${selectedExam.name}) على منصة د. أحمد رزق. نرجو المتابعة.`;
