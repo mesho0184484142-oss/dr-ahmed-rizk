@@ -9,40 +9,33 @@
     <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
     <!-- مكتبة EmailJS -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
         (function(){
-            // ضع مفتاح Public Key الخاص بك هنا
+            // ⚠️ شيل الكلمة اللي بالعربي وحط الـ Public Key بتاعك بين علامتين التنصيص
             emailjs.init("ضع_الـ_Public_Key_هنا");
         })();
     </script>
+    
     <style>
         body { font-family: 'Cairo', sans-serif !important; background-color: #f4f7fe; color: #2b3674; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
-        
         .container { background: #ffffff; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 500px; border: 1px solid #e0e5f2; }
-        
         h2 { font-weight: 800; color: #4318FF; text-align: center; margin-bottom: 30px; font-size: 24px; margin-top: 0; }
-        
         label { font-weight: 700; margin-bottom: 8px; display: block; color: #2b3674; font-size: 14px; }
-        
         input, select { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #e0e5f2; background: #f9fbfd; color: #2b3674; font-family: 'Cairo', sans-serif; font-weight: 600; margin-bottom: 20px; box-sizing: border-box; outline: none; transition: 0.3s; }
         input:focus, select:focus { border-color: #4318FF; background: #ffffff; box-shadow: 0 0 0 3px rgba(67, 24, 255, 0.1); }
-        
         button { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: 800; font-family: 'Cairo', sans-serif; font-size: 16px; cursor: pointer; transition: 0.3s; color: white; display: block; }
         .btn-submit { background: #4318FF; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2); }
         .btn-submit:hover { background: #2b3674; transform: translateY(-2px); }
-        
         .btn-cancel { background: transparent; color: #EE5D50; margin-top: 15px; border: 2px solid #EE5D50; box-shadow: none; }
         .btn-cancel:hover { background: #EE5D50; color: white; }
-
         .otp-container { display: none; text-align: center; }
         .otp-input { width: 100%; font-size: 30px; letter-spacing: 20px; text-align: center; padding: 15px; color: #4318FF; font-weight: 800; background: #f4f7fe; }
-        
         .login-link { text-align: center; margin-top: 20px; font-size: 15px; font-weight: 600; color: #a3aed1; }
         .login-link a { color: #4318FF; font-weight: 800; text-decoration: none; transition: 0.3s; }
         .login-link a:hover { color: #2b3674; text-decoration: underline; }
-
         @media (max-width: 768px) {
             .container { padding: 30px 20px; }
             h2 { font-size: 22px; }
@@ -160,7 +153,6 @@
 
                 generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
 
-                // تجهيز المتغيرات للإرسال عبر EmailJS
                 const templateParams = {
                     to_name: pendingUserData.name,
                     to_email: email,
@@ -169,7 +161,7 @@
 
                 submitBtn.innerText = "⏳ جاري إرسال الإيميل...";
 
-                // إرسال الإيميل باستخدام Service ID و Template ID
+                // ⚠️ شيل الكلمة اللي بالعربي وحط الـ Template ID بتاعك بين علامتين التنصيص
                 emailjs.send('service_y9671et', 'ضع_الـ_Template_ID_هنا', templateParams)
                     .then(function(response) {
                         document.getElementById('registrationFormContainer').style.display = 'none';
@@ -179,7 +171,8 @@
                         submitBtn.innerText = "إرسال كود التحقق ✉️";
                         submitBtn.disabled = false;
                     }, function(error) {
-                        alert("❌ فشل إرسال الإيميل. تأكد من صحة البريد الإلكتروني.");
+                        // الميزة الجديدة: إظهار سبب المشكلة الحقيقي
+                        alert("❌ فشل الإرسال! السيرفر بيقول: " + JSON.stringify(error));
                         submitBtn.innerText = "إرسال كود التحقق ✉️";
                         submitBtn.disabled = false;
                     });
