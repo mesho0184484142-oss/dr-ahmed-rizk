@@ -1,0 +1,267 @@
+/* assets/css/student.css */
+
+body {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 0;
+    margin: 0;
+    background-color: #f8fafc;
+}
+
+/* القائمة الجانبية للطالب */
+.sidebar {
+    width: 260px;
+    background-color: #2c3e50; /* لون كحلي مميز للطالب */
+    color: white;
+    min-height: 100vh;
+    padding: 20px;
+    position: fixed;
+    right: 0;
+    top: 0;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar h3 {
+    color: #3498db; /* لون أزرق فاتح */
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar ul li { margin: 12px 0; }
+
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 17px;
+    display: block;
+    padding: 12px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.sidebar ul li a:hover, .sidebar ul li a.active {
+    background-color: #3498db;
+}
+
+/* منطقة المحتوى الرئيسي */
+.main-content {
+    flex: 1;
+    padding: 40px;
+    margin-right: 260px;
+}
+
+.main-content h2 {
+    color: #2c3e50;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+/* صندوق التنبيهات */
+.alert-box {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 15px 20px;
+    border-radius: 8px;
+    border: 1px solid #ffeeba;
+    margin-bottom: 30px;
+    font-size: 16px;
+}
+
+/* عناوين الأقسام */
+.section-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #0056b3;
+    margin-top: 40px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 10px;
+}
+
+/* شبكة الكروت (لامتحانات والشيتات) */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+/* تنسيق الكروت */
+.exam-card, .sheet-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.exam-card { border-top: 4px solid #e74c3c; } /* أحمر للامتحانات */
+.sheet-card { border-top: 4px solid #28a745; } /* أخضر للشيتات */
+
+.exam-card h4, .sheet-card h4 {
+    margin-top: 0;
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.exam-card p, .sheet-card p {
+    color: #666;
+    font-size: 14px;
+    margin: 8px 0;
+}
+
+/* الأزرار داخل الكروت */
+.start-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 12px;
+    width: 100%;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 15px;
+    font-weight: bold;
+    font-size: 15px;
+    transition: background-color 0.3s ease;
+}
+
+.start-btn:hover { background-color: #c0392b; }
+
+.download-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 12px;
+    width: 100%;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 15px;
+    font-weight: bold;
+    font-size: 15px;
+    transition: background-color 0.3s ease;
+}
+
+.download-btn:hover { background-color: #218838; }
+/* =========================================
+   تنسيقات شاشة الامتحان الفعلي (Exam Mode)
+   ========================================= */
+
+/* إلغاء نظام الـ Flex الخاص باللوحة العادية ليأخذ الامتحان الشاشة كاملة */
+body.exam-mode {
+    display: block; 
+    background-color: #f4f7f6;
+}
+
+/* الشريط العلوي الثابت */
+.exam-header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.exam-title {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.exam-timer {
+    font-size: 18px;
+    background-color: #e74c3c;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* حاوية الأسئلة */
+.exam-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.question-box {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+    border-right: 5px solid #3498db; /* خط أزرق على يمين السؤال لتمييزه */
+}
+
+.question-box h3 {
+    margin-top: 0;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+/* قائمة الاختيارات */
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.options-list label {
+    display: flex;
+    align-items: center;
+    background-color: #f8fafc;
+    padding: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.options-list label:hover {
+    background-color: #eaf2f8;
+    border-color: #3498db;
+}
+
+/* تكبير حجم الـ Radio Button لتسهيل الضغط عليه */
+.options-list input[type="radio"] {
+    margin-left: 15px;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    accent-color: #3498db; /* تلوين النقطة بالأزرق في المتصفحات الحديثة */
+}
+
+/* زر تسليم الامتحان */
+.submit-exam-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.3s ease;
+    margin-bottom: 50px;
+    box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
+}
+
+.submit-exam-btn:hover {
+    background-color: #218838;
+}

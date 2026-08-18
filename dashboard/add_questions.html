@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إضافة الأسئلة - Nova Academy</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+
+    <!-- القائمة الجانبية -->
+    <div class="sidebar">
+    <h3>👨‍🏫 منصة د. أحمد رزق</h3>
+        <ul>
+            <li><a href="index.html">🏠 الرئيسية والإحصائيات</a></li>
+            <li><a href="add_exam.html" class="active">📝 رفع امتحان جديد</a></li>
+            <li><a href="#">📚 رفع شيتات (PDF)</a></li>
+            <li><a href="#">📊 نتائج الطلاب</a></li>
+            <li><a href="../index.html">🚪 تسجيل الخروج</a></li>
+        </ul>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-content">
+        <h2>إضافة أسئلة الامتحان</h2>
+        
+        <!-- الحاوية التي ستضم كل الأسئلة -->
+        <div id="questionsContainer">
+            
+            <!-- بلوك السؤال الأول (الافتراضي) -->
+            <div class="card question-block" id="question-1">
+                <h3 class="question-title">السؤال رقم 1</h3>
+                
+                <div class="form-group">
+                    <label>نص السؤال:</label>
+                    <textarea class="question-text" rows="3" placeholder="اكتب نص السؤال هنا..." required></textarea>
+                </div>
+
+                <div class="options-grid">
+                    <div class="form-group">
+                        <label>الخيار (أ):</label>
+                        <input type="text" placeholder="اكتب الخيار الأول" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الخيار (ب):</label>
+                        <input type="text" placeholder="اكتب الخيار الثاني" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الخيار (ج):</label>
+                        <input type="text" placeholder="اكتب الخيار الثالث" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الخيار (د):</label>
+                        <input type="text" placeholder="اكتب الخيار الرابع" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label style="color: #28a745;">الإجابة الصحيحة:</label>
+                    <select required>
+                        <option value="" disabled selected>اختر الإجابة الصحيحة</option>
+                        <option value="a">الخيار (أ)</option>
+                        <option value="b">الخيار (ب)</option>
+                        <option value="c">الخيار (ج)</option>
+                        <option value="d">الخيار (د)</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- أزرار التحكم -->
+        <div class="action-buttons">
+            <button class="upload-btn info-btn" onclick="addNewQuestion()">➕ إضافة سؤال آخر</button>
+            <button class="upload-btn" onclick="saveExam()">💾 حفظ الامتحان ونشره</button>
+        </div>
+    </div>
+
+    <!-- كود الجافاسكريبت للتحكم في إضافة الأسئلة -->
+    <script>
+        let questionCount = 1;
+
+        function addNewQuestion() {
+            questionCount++;
+            
+            const container = document.getElementById('questionsContainer');
+            
+            // إنشاء بلوك جديد للسؤال
+            const newQuestion = document.createElement('div');
+            newQuestion.className = 'card question-block';
+            newQuestion.id = `question-${questionCount}`;
+            
+            // محتوى السؤال الجديد (مكرر من الأول مع تغيير الرقم)
+            newQuestion.innerHTML = `
+                <h3 class="question-title">السؤال رقم ${questionCount}</h3>
+                
+                <div class="form-group">
+                    <label>نص السؤال:</label>
+                    <textarea class="question-text" rows="3" placeholder="اكتب نص السؤال هنا..." required></textarea>
+                </div>
+
+                <div class="options-grid">
+                    <div class="form-group">
+                        <label>الخيار (أ):</label>
+                        <input type="text" placeholder="اكتب الخيار الأول" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الخيار (ب):</label>
+                        <input type="text" placeholder="اكتب الخيار الثاني" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الخيار (ج):</label>
+                        <input type="text" placeholder="اكتب الخيار الثالث" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الخيار (د):</label>
+                        <input type="text" placeholder="اكتب الخيار الرابع" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label style="color: #28a745;">الإجابة الصحيحة:</label>
+                    <select required>
+                        <option value="" disabled selected>اختر الإجابة الصحيحة</option>
+                        <option value="a">الخيار (أ)</option>
+                        <option value="b">الخيار (ب)</option>
+                        <option value="c">الخيار (ج)</option>
+                        <option value="d">الخيار (د)</option>
+                    </select>
+                </div>
+                
+                <button class="delete-btn" onclick="removeQuestion(${questionCount})">🗑️ حذف هذا السؤال</button>
+            `;
+            
+            container.appendChild(newQuestion);
+        }
+
+        function removeQuestion(id) {
+            const questionBlock = document.getElementById(`question-${id}`);
+            if (questionBlock) {
+                questionBlock.remove();
+            }
+        }
+
+        // استبدل دالة saveExam() القديمة بهذا الكود
+
+function saveExam() {
+    // مصفوفة (Array) هنخزن فيها كل الأسئلة
+    const questionsList = [];
+    
+    // هنجيب كل بلوكات الأسئلة اللي في الصفحة
+    const questionBlocks = document.querySelectorAll('.question-block');
+
+    questionBlocks.forEach((block, index) => {
+        // سحب القيم من الحقول
+        const qText = block.querySelector('.question-text').value.trim();
+        const optionsInputs = block.querySelectorAll('.options-grid input');
+        const correctAns = block.querySelector('select').value;
+
+        // التأكد إن الدكتور كتب السؤال والاختيارات وحدد الإجابة الصح
+        if (qText !== "" && correctAns !== "") {
+            questionsList.push({
+                id: index + 1,
+                text: qText,
+                options: {
+                    a: optionsInputs[0].value,
+                    b: optionsInputs[1].value,
+                    c: optionsInputs[2].value,
+                    d: optionsInputs[3].value
+                },
+                correct: correctAns
+            });
+        }
+    });
+
+    // لو الدكتور داس حفظ وهو مش كاتب حاجة
+    if (questionsList.length === 0) {
+        alert("⚠️ يرجى كتابة سؤال واحد على الأقل وتحديد إجابته الصحيحة قبل الحفظ.");
+        return;
+    }
+
+    // حفظ الأسئلة في الـ LocalStorage
+    localStorage.setItem('savedExam', JSON.stringify(questionsList));
+    
+    alert("✅ تم حفظ الامتحان بنجاح! الأسئلة أصبحت متاحة للطلاب الآن.");
+    window.location.href = "index.html"; // العودة للرئيسية
+}
+    </script>
+</body>
+</html>

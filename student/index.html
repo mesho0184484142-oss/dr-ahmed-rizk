@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة الطالب - Nova Academy</title>
+    <!-- ربط ملف التصميم الأساسي -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <!-- ربط ملف التصميم الخاص بالطالب -->
+    <link rel="stylesheet" href="../assets/css/student.css">
+</head>
+<body>
+
+    <!-- القائمة الجانبية للطالب -->
+    <div class="sidebar">
+        <h3>🎓 بوابة الطالب</h3>
+        <ul>
+            <li><a href="index.html" class="active">🏠 الرئيسية (اللوحة)</a></li>
+            <li><a href="#">📝 امتحاناتي</a></li>
+            <li><a href="#">📚 المذكرات والشيتات</a></li>
+            <li><a href="#">📊 تقارير الدرجات</a></li>
+            <li><a href="../auth/login.html">🚪 تسجيل الخروج</a></li>
+        </ul>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-content">
+        <h2>أهلاً بك يا طالب في منصتك التعليمية 🚀</h2>
+
+        <!-- صندوق التنبيهات (لو في امتحان شغال دلوقتي) -->
+        <div class="alert-box">
+            <strong>تنبيه هام:</strong> لديك امتحان جديد متاح الآن! احرص على حله قبل انتهاء الوقت المسموح.
+        </div>
+
+        <!-- قسم الامتحانات المتاحة -->
+        <div class="section-title">📝 الامتحانات المتاحة الآن</div>
+        <div class="cards-grid">
+            <!-- كارت الامتحان -->
+            <div class="exam-card">
+                <h4>امتحان الباب الأول</h4>
+                <p>المادة: الفيزياء</p>
+                <p>المدة: 60 دقيقة</p>
+                <p>عدد الأسئلة: 20 سؤال</p>
+                <!-- الزرار ده هينقله لصفحة الامتحان الفعلية اللي هنبرمجها بعدين -->
+                <button class="start-btn" onclick="window.location.href='take_exam.html'">▶️ ابدأ الامتحان الآن</button>
+            </div>
+        </div>
+
+        <!-- قسم المذكرات والشيتات -->
+        <div class="section-title">📚 أحدث المذكرات والشيتات</div>
+        <div class="cards-grid">
+            <!-- كارت الشيت 1 -->
+            <div class="sheet-card">
+                <h4>مراجعة الباب الأول (جزء 1)</h4>
+                <p>صيغة الملف: PDF</p>
+                <p>تاريخ الرفع: 18 أغسطس 2026</p>
+                <button class="download-btn">⬇️ تحميل الملف</button>
+            </div>
+            
+            <!-- كارت الشيت 2 -->
+            <div class="sheet-card">
+                <h4>ملخص أهم القوانين</h4>
+                <p>صيغة الملف: PDF</p>
+                <p>تاريخ الرفع: 15 أغسطس 2026</p>
+                <button class="download-btn">⬇️ تحميل الملف</button>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

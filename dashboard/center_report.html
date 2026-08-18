@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقرير السنتر التفصيلي - منصة د. أحمد رزق</title>
+    <!-- ربط ملفات التصميم -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <style>
+        /* تنسيقات خاصة بشريط المستوى داخل التقرير */
+        .progress-container {
+            background-color: #e2e8f0; 
+            border-radius: 10px; 
+            width: 100%; 
+            height: 10px; 
+            margin-bottom: 5px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%; 
+            border-radius: 10px;
+        }
+        
+        /* إخفاء العناصر غير المرغوب فيها عند الطباعة */
+        @media print {
+            .sidebar, .print-btn, .filters-section {
+                display: none !important;
+            }
+            .main-content {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+            body {
+                background-color: white;
+            }
+            .card {
+                box-shadow: none;
+                border: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- القائمة الجانبية المحدثة باسم الدكتور -->
+    <div class="sidebar">
+        <h3>👨‍🏫 منصة د. أحمد رزق</h3>
+        <ul>
+            <li><a href="index.html">🏠 الرئيسية والإحصائيات</a></li>
+            <li><a href="add_exam.html">📝 رفع امتحان جديد</a></li>
+            <li><a href="center_report.html" class="active">📊 تقارير السناتر التفصيلية</a></li>
+            <li><a href="#">📚 رفع شيتات (PDF)</a></li>
+            <li><a href="../index.html">🚪 تسجيل الخروج</a></li>
+        </ul>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-content">
+        <h2>التقارير التفصيلية ومتابعة المستوى</h2>
+
+        <!-- أدوات اختيار التقرير (لن تظهر في الطباعة) -->
+        <div class="card filters-section" style="background-color: #eaf2f8; border-top: 4px solid #3498db;">
+            <div style="display: flex; gap: 15px; align-items: flex-end;">
+                <div style="flex: 1;">
+                    <label style="font-weight: bold; margin-bottom: 5px; display: block;">اختر السنتر:</label>
+                    <select style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                        <option>سنتر ألفا</option>
+                        <option>سنتر المجد</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-weight: bold; margin-bottom: 5px; display: block;">اختر الامتحان:</label>
+                    <select style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                        <option>امتحان الباب الأول - فيزياء</option>
+                        <option>امتحان شامل على نصف المنهج</option>
+                    </select>
+                </div>
+                <button class="upload-btn" style="height: 42px; margin-bottom: 0;">عرض التقرير</button>
+            </div>
+        </div>
+        
+        <!-- قسم تقرير السنتر التفصيلي (الذي سيتم طباعته) -->
+        <div class="card" id="advancedReportSection">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #2c3e50;">📊 تقرير: سنتر ألفا - امتحان الباب الأول</h3>
+                <button class="upload-btn info-btn print-btn" onclick="window.print()">🖨️ طباعة التقرير</button>
+            </div>
+
+            <!-- 1. قائمة الطلاب الذين أدوا الامتحان -->
+            <h4 style="color: #28a745; margin-bottom: 15px;">✅ الطلاب الحاضرين (مرتبين حسب النتيجة)</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>الترتيب</th>
+                        <th>اسم الطالب</th>
+                        <th>درجة الامتحان الحالي</th>
+                        <th>مؤشر المستوى (متوسط درجاته السابقة)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- المركز الأول -->
+                    <tr>
+                        <td>🏆 1</td>
+                        <td><strong>محمد محمود</strong></td>
+                        <td style="font-weight: bold; color: #28a745;">50/50 (100%)</td>
+                        <td style="text-align: right; width: 300px;">
+                            <div class="progress-container">
+                                <div class="progress-bar" style="background-color: #28a745; width: 95%;"></div>
+                            </div>
+                            <span style="font-size: 13px; color: #64748b;">المتوسط العام: 95% (ممتاز)</span>
+                        </td>
+                    </tr>
+                    
+                    <!-- المركز الثاني -->
+                    <tr>
+                        <td>🥈 2</td>
+                        <td><strong>كريم حسن</strong></td>
+                        <td style="font-weight: bold; color: #17a2b8;">45/50 (90%)</td>
+                        <td style="text-align: right; width: 300px;">
+                            <div class="progress-container">
+                                <div class="progress-bar" style="background-color: #17a2b8; width: 88%;"></div>
+                            </div>
+                            <span style="font-size: 13px; color: #64748b;">المتوسط العام: 88% (جيد جداً)</span>
+                        </td>
+                    </tr>
+
+                    <!-- مستوى ضعيف -->
+                    <tr>
+                        <td>🔻 3</td>
+                        <td><strong>أحمد علي</strong></td>
+                        <td style="font-weight: bold; color: #dc3545;">20/50 (40%)</td>
+                        <td style="text-align: right; width: 300px;">
+                            <div class="progress-container">
+                                <div class="progress-bar" style="background-color: #dc3545; width: 45%;"></div>
+                            </div>
+                            <span style="font-size: 13px; color: #64748b;">المتوسط العام: 45% (يحتاج متابعة)</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- 2. قائمة الطلاب الغائبين -->
+            <h4 style="color: #dc3545; margin-top: 40px; border-top: 2px dashed #eee; padding-top: 20px; margin-bottom: 15px;">❌ الطلاب الغائبين (لم يؤدوا الامتحان)</h4>
+            <table style="background-color: #fff6f6;">
+                <thead>
+                    <tr>
+                        <th>اسم الطالب</th>
+                        <th>رقم هاتف الطالب</th>
+                        <th>رقم ولي الأمر</th>
+                        <th class="print-btn">الإجراء</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>عمر خالد</td>
+                        <td>01122334455</td>
+                        <td>01012345678</td>
+                        <td class="print-btn">
+                            <button style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                                📱 إرسال إنذار لولي الأمر
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+</body>
+</html>

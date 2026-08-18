@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - Nova Academy</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+    <div class="container" style="max-width: 400px; margin: 80px auto;">
+        <h2 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">🔐 تسجيل الدخول</h2>
+        
+        <form onsubmit="handleLogin(event)">
+            <div>
+                <label>نوع الحساب:</label>
+                <select id="loginType" required style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px;">
+                    <option value="student">👨‍🎓 طالب</option>
+                    <option value="parent">👨‍👩‍👦 ولي أمر</option>
+                    <option value="admin">👨‍🏫 إدارة (دكتور / مساعد)</option>
+                </select>
+            </div>
+
+            <div>
+                <label>رقم الهاتف (أو اسم المستخدم للإدارة):</label>
+                <input type="text" id="loginUsername" placeholder="أدخل رقم الهاتف" required>
+            </div>
+
+            <div>
+                <label>الرقم السري (لولي الأمر: أدخل رقم هاتفك):</label>
+                <input type="password" id="loginPassword" placeholder="أدخل الرقم السري" required>
+            </div>
+
+            <!-- رابط نسيان كلمة المرور -->
+            <div style="text-align: left; margin-bottom: 15px;">
+                <a href="#" onclick="forgotPassword()" style="color: #dc3545; font-size: 14px; text-decoration: none;">هل نسيت كلمة المرور؟</a>
+            </div>
+
+            <button type="submit">دخول</button>
+            
+            <p style="text-align: center; margin-top: 15px;">
+    ليس لديك حساب؟ <a href="../register.html" style="color: #0056b3; font-weight: bold;">إنشاء حساب طالب</a>
+</p>
+        </form>
+    </div>
+
+    <script>
+        function handleLogin(event) {
+            event.preventDefault(); 
+
+            const loginType = document.getElementById('loginType').value;
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            // 1. دخول الإدارة (الدكتور أو المساعدين)
+            if (loginType === "admin") {
+                if (username === "01145114388" && password === "Ahmed987654321") {
+                    window.location.href = "../dashboard/index.html";
+                    return;
+                }
+                const savedAdmins = JSON.parse(localStorage.getItem('admins')) || {};
+                if (savedAdmins[username] && savedAdmins[username] === password) {
+                    window.location.href = "../dashboard/index.html";
+                    return;
+                }
+                alert("❌ بيانات الإدارة غير صحيحة!");
+                return;
+            }
+
+            // جلب بيانات الطلاب
+            const savedStudents = JSON.parse(localStorage.getItem('students')) || {};
+            const studentData = savedStudents[username];
+
+            // 2. دخول الطالب
+            if (loginType === "student") {
+                if (studentData && studentData.password === password) {
+                    window.location.href = "../student/index.html";
+                    return;
+                }
+                alert("❌ بيانات الطالب غير صحيحة! تأكد من رقم الهاتف والرقم السري.");
+                return;
+            }
+
+            // 3. دخول ولي الأمر
+            if (loginType === "parent") {
+                // ولي الأمر يدخل برقم هاتف الطالب، وكلمة السر هي رقم هاتف ولي الأمر نفسه
+                if (studentData && studentData.parentPhone === password) {
+                    alert(`مرحباً بك يا ولي أمر الطالب (${studentData.name}). سيتم تحويلك لصفحة النتيجة.`);
+                    // تحويل ولي الأمر لصفحة النتيجة مباشرة
+                    window.location.href = "../student/result.html";
+                    return;
+                }
+                alert("❌ بيانات ولي الأمر غير صحيحة! تأكد أن اسم المستخدم هو رقم الطالب، وكلمة السر هي رقم هاتفك.");
+                return;
+            }
+        }
+
+        // خاصية نسيان كلمة المرور (استرجاع بالبريد الإلكتروني)
+        function forgotPassword() {
+            const phone = prompt("أدخل رقم هاتف الطالب للبحث عن الحساب:");
+            if (!phone) return;
+
+            const savedStudents = JSON.parse(localStorage.getItem('students')) || {};
+            const studentData = savedStudents[phone];
+
+            if (studentData) {
+                // الحساب موجود، نطلب البريد الإلكتروني للتحقق
+                const email = prompt("تم العثور على الحساب. يرجى إدخال البريد الإلكتروني المرتبط به للتحقق:");
+                
+                if (email === studentData.email) {
+                    // البريد صحيح، نطلب كلمة سر جديدة
+                    const newPassword = prompt("البريد الإلكتروني صحيح ✅\nأدخل كلمة المرور الجديدة:");
+                    if (newPassword && newPassword.trim() !== "") {
+                        // حفظ كلمة السر الجديدة
+                        savedStudents[phone].password = newPassword;
+                        localStorage.setItem('students', JSON.stringify(savedStudents));
+                        alert("🎉 تم تغيير كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.");
+                    } else {
+                        alert("⚠️ لم يتم إدخال كلمة مرور. تم إلغاء العملية.");
+                    }
+                } else {
+                    alert("❌ البريد الإلكتروني غير متطابق مع الحساب المسجل!");
+                }
+            } else {
+                alert("❌ رقم الهاتف غير مسجل لدينا في النظام.");
+            }
+        }
+    </script>
+</body>
+</html>

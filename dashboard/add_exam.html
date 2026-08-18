@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رفع امتحان جديد - Nova Academy</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+
+    <div class="sidebar">
+    <h3>👨‍🏫 منصة د. أحمد رزق</h3>
+        <ul>
+            <li><a href="index.html">🏠 الرئيسية والإحصائيات</a></li>
+            <li><a href="add_exam.html" class="active">📝 رفع امتحان جديد</a></li>
+            <li><a href="#">📚 رفع شيتات (PDF)</a></li>
+            <li><a href="#">📊 نتائج الطلاب</a></li>
+            <li><a href="settings.html">⚙️ إعدادات المنصة والمظهر</a></li>
+            <li><a href="../index.html">🚪 تسجيل الخروج</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h2>إعداد امتحان جديد</h2>
+        
+        <div class="form-container">
+            <form id="addExamForm">
+                <div class="form-group">
+                    <label>اسم الامتحان:</label>
+                    <input type="text" id="examName" placeholder="مثال: امتحان الباب الأول - فيزياء" required>
+                </div>
+
+                <div class="form-group">
+                    <label>السنتر المستهدف:</label>
+                    <select id="examCenter" required>
+                        <option value="all">كل السناتر</option>
+                        <option value="center_a">سنتر ألفا</option>
+                        <option value="center_b">سنتر المجد</option>
+                        <option value="center_c">سنتر الأوائل</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>عدد الأسئلة:</label>
+                    <input type="number" id="questionCount" min="1" placeholder="أدخل عدد الأسئلة" required>
+                </div>
+
+                <div class="form-group">
+                    <label>وقت الامتحان (بالدقائق):</label>
+                    <input type="number" id="examDuration" min="5" placeholder="مثال: 60" required>
+                </div>
+
+                <div class="form-group">
+                    <label>تاريخ ووقت إتاحة الامتحان:</label>
+                    <input type="datetime-local" id="examDateTime" required>
+                </div>
+
+                <button type="button" class="submit-btn" onclick="window.location.href='add_questions.html'">حفظ ومتابعة لإضافة الأسئلة</button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

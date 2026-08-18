@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتيجة الطالب</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+            padding: 30px 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .result-container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 850px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 35px;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #eef2f6;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: #1e293b;
+            font-size: 26px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .student-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+
+        table th, table td {
+            padding: 12px 16px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        table th {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+
+        .badge-danger {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .summary-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .summary-details h3 {
+            font-size: 18px;
+            color: #1e40af;
+            margin-bottom: 4px;
+        }
+
+        .summary-details p {
+            color: #3b82f6;
+            font-size: 14px;
+        }
+
+        .final-grade {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1d4ed8;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 22px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+        }
+
+        .btn-outline:hover {
+            background-color: #f1f5f9;
+        }
+
+        @media print {
+            body {
+                background-color: #fff;
+                padding: 0;
+            }
+            .result-container {
+                box-shadow: none;
+                max-width: 100%;
+                padding: 0;
+            }
+            .actions {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="result-container">
+    <!-- رأس الصفحة -->
+    <div class="header">
+        <h1>كشف درجات الطالب</h1>
+        <p>العام الدراسي 2025 / 2026 - الفصل الدراسي الثاني</p>
+    </div>
+
+    <!-- بيانات الطالب -->
+    <div class="student-info-grid">
+        <div class="info-item">
+            <span class="info-label">اسم الطالب</span>
+            <span class="info-value">أحمد محمد علي</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">رقم الجلوس / الكود</span>
+            <span class="info-value">104852</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">الصف / الشعبة</span>
+            <span class="info-value">الصف الثالث الثانوي</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">الحالة العامة</span>
+            <span class="info-value" style="color: #15803d;">ناجح</span>
+        </div>
+    </div>
+
+    <!-- جدول المواد والدرجات -->
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>المادة الدراسية</th>
+                <th>الدرجة العظمى</th>
+                <th>درجة النجاح</th>
+                <th>الدرجة المحصلة</th>
+                <th>التقدير</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>اللغة العربية</td>
+                <td>80</td>
+                <td>40</td>
+                <td>74</td>
+                <td><span class="badge badge-success">ممتاز</span></td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>اللغة الإنجليزية</td>
+                <td>50</td>
+                <td>25</td>
+                <td>46</td>
+                <td><span class="badge badge-success">ممتاز</span></td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>الرياضيات</td>
+                <td>60</td>
+                <td>30</td>
+                <td>55</td>
+                <td><span class="badge badge-success">جيد جداً</span></td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>الفيزياء</td>
+                <td>60</td>
+                <td>30</td>
+                <td>52</td>
+                <td><span class="badge badge-success">جيد جداً</span></td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>الكيمياء</td>
+                <td>60</td>
+                <td>30</td>
+                <td>58</td>
+                <td><span class="badge badge-success">ممتاز</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ملخص المجموع -->
+    <div class="summary-card">
+        <div class="summary-details">
+            <h3>المجموع الكلي: 285 / 310</h3>
+            <p>النسبة المئوية التراكمية</p>
+        </div>
+        <div class="final-grade">91.93%</div>
+    </div>
+
+    <!-- الأزرار -->
+    <div class="actions">
+        <button class="btn btn-outline" onclick="window.history.back()">رجوع</button>
+        <button class="btn btn-primary" onclick="window.print()">طباعة النتيجة</button>
+    </div>
+</div>
+
+</body>
+</html>

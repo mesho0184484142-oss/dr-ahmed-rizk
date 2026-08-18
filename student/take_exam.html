@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>امتحان الباب الأول - Nova Academy</title>
+    <!-- ربط ملفات التصميم -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/student.css">
+</head>
+<body class="exam-mode">
+
+    <!-- الشريط العلوي للامتحان (ثابت أثناء النزول) -->
+    <div class="exam-header">
+        <div class="exam-title">📝 امتحان الباب الأول - فيزياء</div>
+        <div class="exam-timer" id="timerDisplay">⏳ الوقت المتبقي: 60:00</div>
+    </div>
+
+    <!-- حاوية الأسئلة -->
+    <!-- حاوية الأسئلة (فارغة لأننا سنملؤها بالجافاسكريبت) -->
+    <div class="exam-container">
+        <form id="examForm">
+            <!-- سيتم توليد الأسئلة هنا ديناميكياً -->
+        </form>
+    </div>
+
+    <!-- كود العداد التنازلي وتوليد الأسئلة -->
+    <script>
+        // 1. توليد الأسئلة من LocalStorage
+        const savedExam = JSON.parse(localStorage.getItem('savedExam'));
+        const form = document.getElementById('examForm');
+
+        if (!savedExam || savedExam.length === 0) {
+            form.innerHTML = '<h3 style="text-align:center; padding: 50px; color:#dc3545;">لا يوجد امتحان متاح حالياً. يرجى انتظار الدكتور لرفع الامتحان.</h3>';
+        } else {
+            let htmlContent = '';
+            
+            savedExam.forEach((q, index) => {
+                htmlContent += `
+                <div class="question-box">
+                    <h3>${index + 1}. ${q.text}</h3>
+                    <div class="options-list">
+                        <label><input type="radio" name="q${q.id}" value="a"> أ) ${q.options.a}</label>
+                        <label><input type="radio" name="q${q.id}" value="b"> ب) ${q.options.b}</label>
+                        <label><input type="radio" name="q${q.id}" value="c"> ج) ${q.options.c}</label>
+                        <label><input type="radio" name="q${q.id}" value="d"> د) ${q.options.d}</label>
+                    </div>
+                </div>
+                `;
+            });
+            
+            // إضافة زر التسليم في النهاية
+            htmlContent += '<button type="button" class="submit-exam-btn" onclick="submitExam()">تسليم الامتحان النهائي</button>';
+            form.innerHTML = htmlContent;
+        }
+
+        // 2. العداد التنازلي
+        let timeInSeconds = 60 * 60; // 60 دقيقة
+        const timerDisplay = document.getElementById('timerDisplay');
+
+        const timerInterval = setInterval(() => {
+            timeInSeconds--;
+            const minutes = Math.floor(timeInSeconds / 60);
+            const seconds = timeInSeconds % 60;
+            const formattedSeconds = seconds < 10 ? '0' + seconds : seconds;
+            
+            timerDisplay.innerText = `⏳ الوقت المتبقي: ${minutes}:${formattedSeconds}`;
+
+            if (timeInSeconds <= 0) {
+                clearInterval(timerInterval);
+                alert("انتهى الوقت! سيتم تسليم الامتحان تلقائياً.");
+                submitExam();
+            }
+        }, 1000);
+
+        // 3. وظيفة تسليم الامتحان والتصحيح التلقائي
+        function submitExam() {
+            clearInterval(timerInterval); 
+            
+            let score = 0;
+            const examData = JSON.parse(localStorage.getItem('savedExam')) || [];
+            
+            // التصحيح: مطابقة اختيار الطالب مع الإجابة الصحيحة المحفوظة
+            examData.forEach(q => {
+                const selectedOption = document.querySelector(`input[name="q${q.id}"]:checked`);
+                if (selectedOption && selectedOption.value === q.correct) {
+                    score++;
+                }
+            });
+
+            // حفظ النتيجة عشان صفحة result.html تقرأها بعدين
+            const finalResult = {
+                score: score,
+                total: examData.length
+            };
+            localStorage.setItem('studentLastResult', JSON.stringify(finalResult));
+
+            alert(`تم تسليم الامتحان! لقد أجبت بشكل صحيح على ${score} من أصل ${examData.length} أسئلة.`);
+            window.location.href = "result.html"; 
+        }
+
+        // 🛡️ نظام المراقبة وحماية الامتحان (Anti-Cheat)
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('copy', event => event.preventDefault());
+        document.addEventListener('cut', event => event.preventDefault());
+        document.addEventListener('paste', event => event.preventDefault());
+
+        let cheatWarnings = 0;
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                cheatWarnings++;
+                if (cheatWarnings === 1) {
+                    alert("⚠️ تحذير: لقد قمت بالخروج من شاشة الامتحان للتو! يرجى عدم تكرار ذلك.");
+                } else if (cheatWarnings >= 2) {
+                    alert("❌ تم سحب ورقة الامتحان لانتهاك قواعد المراقبة.");
+                    submitExam(); 
+                }
+            }
+        });
+    </script>
+</body>
+</html>
