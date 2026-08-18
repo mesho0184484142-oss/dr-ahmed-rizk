@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        body { font-family: 'Cairo', sans-serif !important; background-color: #f4f7fe !important; color: #2b3674 !important; margin: 0 !important; padding-bottom: 50px; user-select: none; /* منع تحديد النص للغش */ }
+        body { font-family: 'Cairo', sans-serif !important; background-color: #f4f7fe !important; color: #2b3674 !important; margin: 0 !important; padding-bottom: 50px; user-select: none; }
         
         .exam-header { background: #ffffff; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 3px solid #4318FF; }
         .exam-title { font-size: 20px; font-weight: 800; color: #4318FF; }
@@ -66,7 +66,6 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // استخراج بيانات الطالب وID الامتحان
         const currentPhone = localStorage.getItem('currentLoggedInStudent');
         const urlParams = new URLSearchParams(window.location.search);
         const examId = urlParams.get('id');
@@ -86,11 +85,9 @@
         function checkIfAlreadyTaken() {
             database.ref(`students/${currentPhone}/results/${examId}`).once('value').then(snapshot => {
                 if (snapshot.exists()) {
-                    // الطالب امتحن قبل كده، اطرده!
                     alert("❌ لقد قمت بأداء هذا الامتحان مسبقاً، لا يمكنك إعادته.");
                     window.location.href = "index.html";
                 } else {
-                    // الطالب جديد على الامتحان، حملهوله
                     fetchExamData();
                 }
             });
@@ -170,14 +167,13 @@
 
         // 5. التصحيح ورفع النتيجة للسيرفر
         function submitExam() {
-            if (isSubmitting) return; // لمنع التكرار
+            if (isSubmitting) return; 
             isSubmitting = true;
             clearInterval(timerInterval); 
             
             let score = 0;
             const questions = currentExamData.questions;
             
-            // التصحيح التلقائي
             questions.forEach((q, index) => {
                 const selectedOption = document.querySelector(`input[name="q${index}"]:checked`);
                 if (selectedOption && parseInt(selectedOption.value) === q.correctAnswerIndex) {
@@ -185,7 +181,6 @@
                 }
             });
 
-            // تجهيز البيانات للرفع
             const resultData = {
                 examName: currentExamData.name,
                 score: score,
@@ -193,13 +188,11 @@
                 dateTaken: new Date().toLocaleString('ar-EG')
             };
 
-            // رفع النتيجة لملف الطالب (عشان يشوفها) + ملف الامتحان (عشان الدكتور يشوفها)
             const updates = {};
             updates[`students/${currentPhone}/results/${examId}`] = resultData;
             updates[`exams/${examId}/results/${currentPhone}`] = score;
 
             database.ref().update(updates).then(() => {
-                // حفظ مؤقت لصفحة النتيجة اللي هتظهرله فوراً
                 localStorage.setItem('studentLastResult', JSON.stringify(resultData));
                 alert(`تم تسليم الامتحان بنجاح!`);
                 window.location.href = "result.html"; 
@@ -209,23 +202,21 @@
             });
         }
 
-        // ==========================================
-        // 🛡️ نظام المراقبة وحماية الامتحان (Anti-Cheat)
-        // ==========================================
-        document.addEventListener('contextmenu', event => event.preventDefault()); // منع الكليك يمين[cite: 2]
-        document.addEventListener('copy', event => event.preventDefault()); // منع النسخ[cite: 2]
-        document.addEventListener('cut', event => event.preventDefault()); // منع القص[cite: 2]
-        document.addEventListener('paste', event => event.preventDefault()); // منع اللصق[cite: 2]
+        // منع الغش
+        document.addEventListener('contextmenu', event => event.preventDefault()); 
+        document.addEventListener('copy', event => event.preventDefault()); 
+        document.addEventListener('cut', event => event.preventDefault()); 
+        document.addEventListener('paste', event => event.preventDefault()); 
 
         let cheatWarnings = 0;
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden' && !isSubmitting) {
                 cheatWarnings++;
                 if (cheatWarnings === 1) {
-                    alert("⚠️ تحذير: لقد قمت بالخروج من شاشة الامتحان للتو! يرجى عدم تكرار ذلك وإلا سيتم سحب الورقة تلقائياً."); //[cite: 2]
+                    alert("⚠️ تحذير: لقد قمت بالخروج من شاشة الامتحان للتو! يرجى عدم تكرار ذلك وإلا سيتم سحب الورقة تلقائياً."); 
                 } else if (cheatWarnings >= 2) {
-                    alert("❌ تم سحب ورقة الامتحان لانتهاك قواعد المراقبة (الخروج المتكرر من الصفحة)."); //[cite: 2]
-                    submitExam(); // تسليم إجباري
+                    alert("❌ تم سحب ورقة الامتحان لانتهاك قواعد المراقبة (الخروج المتكرر من الصفحة)."); 
+                    submitExam(); 
                 }
             }
         });
