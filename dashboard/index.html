@@ -262,14 +262,23 @@
         let currentCenters = [];
 
         // المزامنة اللحظية (Realtime Sync)
-        window.onload = function() {
+       window.onload = function() {
             // 1. مزامنة السناتر
             database.ref('centers').on('value', snapshot => {
-                currentCenters = snapshot.val() || ["سنتر ألفا", "سنتر المجد"];
+                if (snapshot.exists()) {
+                    const centers = snapshot.val();
+                    // التأكد إن الداتا مصفوفة عشان باقي الكود يشتغل صح
+                    currentCenters = Array.isArray(centers) ? centers : Object.values(centers);
+                } else {
+                    // لو الداتا بيز فاضية ومفيش أي سناتر
+                    currentCenters = [];
+                }
+                
+                // تحديث الواجهة والإحصائيات بناءً على الداتا الحقيقية
                 refreshCentersUI();
                 updateStatsUI();
             });
-
+       
             // 2. مزامنة المساعدين
             database.ref('admins').on('value', snapshot => {
                 const admins = snapshot.val() || {};
