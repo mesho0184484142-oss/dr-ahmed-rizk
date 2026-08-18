@@ -48,6 +48,39 @@
             color: var(--secondary);
             pointer-events: none;
         }
+
+        /* 🚀 حل مشكلة الجدول في الموبايل */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto; /* السماح بالتمرير الأفقي */
+            -webkit-overflow-scrolling: touch; /* تمرير سلس في الموبايل */
+            border-radius: 15px; /* للحفاظ على انحناء الحواف */
+        }
+
+        /* ضمان عدم تداخل الأعمدة في الموبايل */
+        table {
+            min-width: 650px; 
+        }
+
+        .delete-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 800;
+            font-family: 'Cairo', sans-serif;
+            transition: 0.3s;
+            box-shadow: 0 5px 10px rgba(238, 93, 80, 0.2);
+            white-space: nowrap; /* يمنع الزر من الانقسام لسطرين */
+        }
+
+        .delete-btn:hover {
+            background: #d94b3e;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(238, 93, 80, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -74,20 +107,23 @@
             <input type="text" id="searchInput" class="search-box" placeholder="ابحث برقم الهاتف أو اسم الطالب..." oninput="filterStudents()">
         </div>
         
-        <div class="card" style="padding: 0; overflow: hidden;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>الاسم بالكامل</th>
-                        <th>رقم الطالب (المعرف)</th>
-                        <th>السنتر</th>
-                        <th style="text-align: center;">إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody id="studentsTableBody">
-                    <tr><td colspan="4" style="text-align:center; padding:30px; color:var(--secondary);">⏳ جاري تحميل بيانات الطلاب...</td></tr>
-                </tbody>
-            </table>
+        <div class="card" style="padding: 0;">
+            <!-- إضافة الحاوية المسؤولة عن التمرير الأفقي في الموبايل -->
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الاسم بالكامل</th>
+                            <th>رقم الطالب (المعرف)</th>
+                            <th>السنتر</th>
+                            <th style="text-align: center;">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody">
+                        <tr><td colspan="4" style="text-align:center; padding:30px; color:var(--secondary);">⏳ جاري تحميل بيانات الطلاب...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -96,10 +132,7 @@
             apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
             authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
             databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "dr-ahmed-rizk-platform",
-            storageBucket: "dr-ahmed-rizk-platform.appspot.com",
-            messagingSenderId: "117735726313",
-            appId: "1:117735726313:web:2a58aa1c4be7137b53e478"
+            projectId: "dr-ahmed-rizk-platform"
         };
         
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -110,7 +143,6 @@
         // جلب الطلاب لحظياً من السيرفر
         database.ref('students').on('value', snapshot => {
             allStudents = snapshot.val() || {};
-            // نحتفظ بكلمة البحث الحالية أثناء التحديث اللحظي لكي لا يختفي البحث
             const currentSearch = document.getElementById('searchInput').value.trim();
             renderTable(currentSearch);
         });
@@ -120,24 +152,21 @@
             tbody.innerHTML = '';
             
             let hasResults = false;
-
-            // تحويل مصطلح البحث لحروف صغيرة لتسهيل التطابق
             const term = searchTerm.toLowerCase();
 
             for (let phone in allStudents) {
                 const st = allStudents[phone];
                 const studentName = (st.name || "").toLowerCase();
                 
-                // فلترة البحث
                 if (studentName.includes(term) || phone.includes(term)) {
                     hasResults = true;
                     tbody.innerHTML += `
                         <tr>
                             <td><strong>${st.name}</strong></td>
-                            <td style="color: var(--primary); font-weight: 800;">${phone}</td>
+                            <td style="color: var(--primary); font-weight: 800; direction: ltr; text-align: right;">${phone}</td>
                             <td>${st.center}</td>
                             <td style="text-align: center;">
-                                <button class="delete-btn" onclick="deleteStudent('${phone}', '${st.name}')">🗑️ حذف</button>
+                                <button class="delete-btn" onclick="deleteStudent('${phone}', '${st.name}')">🗑️ حذف الطالب</button>
                             </td>
                         </tr>
                     `;
@@ -149,13 +178,11 @@
             }
         }
 
-        // دالة مرتبطة بمربع البحث
         function filterStudents() {
             const term = document.getElementById('searchInput').value.trim();
             renderTable(term);
         }
 
-        // دالة الحذف القوية
         function deleteStudent(phone, name) {
             const confirmDelete = confirm(`⚠️ هل أنت متأكد من حذف الطالب (${name}) نهائياً؟\nسيتم مسح جميع بياناته ونتائجه ولا يمكن التراجع عن هذا الإجراء!`);
             
