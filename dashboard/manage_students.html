@@ -4,54 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إدارة الطلاب - منصة د. أحمد رزق</title>
+    <!-- استدعاء الخطوط وتنسيقات لوحة التحكم الأساسية -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    
+    <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
-        body { font-family: 'Cairo', sans-serif; background: #f4f7fe; color: #2b3674; margin: 0; display: flex; }
-        .sidebar { width: 280px; background: #ffffff; box-shadow: -5px 0 20px rgba(0,0,0,0.05); position: fixed; right: 0; top: 0; height: 100vh; padding: 30px 20px; z-index: 1000; overflow-y: auto; }
-        .sidebar h3 { color: #4318FF; font-weight: 800; text-align: center; margin-bottom: 40px; font-size: 22px; }
-        .sidebar ul { list-style: none; padding: 0; margin: 0; }
-        .sidebar ul li a { display: block; padding: 15px 20px; color: #a3aed1; text-decoration: none; font-weight: 700; border-radius: 12px; margin-bottom: 10px; transition: 0.3s; }
-        .sidebar ul li a.active, .sidebar ul li a:hover { background: #4318FF; color: #ffffff; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2); }
-        .main-content { margin-right: 280px; padding: 40px; width: calc(100% - 280px); }
-        .search-box { width: 100%; padding: 15px 20px; border-radius: 12px; border: 2px solid #e0e5f2; font-size: 16px; font-family: 'Cairo'; margin-bottom: 25px; outline: none; transition: 0.3s; }
-        .search-box:focus { border-color: #4318FF; box-shadow: 0 0 0 3px rgba(67,24,255,0.1); }
-        .card { background: #ffffff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
-        table { width: 100%; border-collapse: collapse; text-align: right; }
-        th { background: #f4f7fe; color: #a3aed1; padding: 15px; font-weight: 700; border-radius: 8px; }
-        td { padding: 15px; border-bottom: 1px solid #f4f7fe; font-weight: 600; }
-        .delete-btn { background: #EE5D50; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Cairo'; transition: 0.3s; }
-        .delete-btn:hover { background: #d94b3e; }
-        @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-right: 0; width: 100%; padding: 20px; } table { display: block; overflow-x: auto; } }
+        .search-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .search-box { 
+            width: 100%; 
+            padding: 18px 50px 18px 20px; 
+            border-radius: 15px; 
+            border: 2px solid var(--border-color); 
+            font-size: 16px; 
+            font-family: 'Cairo', sans-serif; 
+            font-weight: 600;
+            color: var(--dark-text);
+            background: var(--card-bg);
+            outline: none; 
+            transition: all 0.3s ease; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+            box-sizing: border-box;
+        }
+
+        .search-box:focus { 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1); 
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: var(--secondary);
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
+
+    <!-- القائمة الجانبية -->
     <div class="sidebar">
         <h3>👨‍🏫 منصة د. أحمد رزق</h3>
         <ul>
-            <li><a href="index.html">🏠 الرئيسية للإدارة</a></li>
+            <li><a href="index.html">🏠 الرئيسية والإحصائيات</a></li>
+            <li><a href="add_exam.html">📝 رفع امتحان جديد</a></li>
+            <li><a href="center_report.html">📊 تقارير السناتر التفصيلية</a></li>
             <li><a href="manage_students.html" class="active">👥 إدارة الطلاب</a></li>
+            <li><a href="settings.html">⚙️ إعدادات المنصة</a></li>
             <li><a href="../auth/login.html">🚪 تسجيل الخروج</a></li>
         </ul>
     </div>
 
+    <!-- المحتوى الرئيسي -->
     <div class="main-content">
-        <h2 style="font-weight: 800; margin-bottom: 20px;">👥 إدارة الطلاب (بحث وحذف)</h2>
-        <input type="text" id="searchInput" class="search-box" placeholder="🔍 ابحث برقم الهاتف أو اسم الطالب..." onkeyup="filterStudents()">
+        <h2>👥 إدارة بيانات الطلاب</h2>
         
-        <div class="card">
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" class="search-box" placeholder="ابحث برقم الهاتف أو اسم الطالب..." oninput="filterStudents()">
+        </div>
+        
+        <div class="card" style="padding: 0; overflow: hidden;">
             <table>
                 <thead>
                     <tr>
-                        <th>الاسم</th>
-                        <th>رقم الطالب</th>
+                        <th>الاسم بالكامل</th>
+                        <th>رقم الطالب (المعرف)</th>
                         <th>السنتر</th>
-                        <th>إجراء</th>
+                        <th style="text-align: center;">إجراءات</th>
                     </tr>
                 </thead>
                 <tbody id="studentsTableBody">
-                    <!-- سيتم تعبئة الطلاب هنا -->
+                    <tr><td colspan="4" style="text-align:center; padding:30px; color:var(--secondary);">⏳ جاري تحميل بيانات الطلاب...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -62,49 +96,77 @@
             apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
             authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
             databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "dr-ahmed-rizk-platform"
+            projectId: "dr-ahmed-rizk-platform",
+            storageBucket: "dr-ahmed-rizk-platform.appspot.com",
+            messagingSenderId: "117735726313",
+            appId: "1:117735726313:web:2a58aa1c4be7137b53e478"
         };
+        
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
         let allStudents = {};
 
-        // جلب الطلاب
+        // جلب الطلاب لحظياً من السيرفر
         database.ref('students').on('value', snapshot => {
             allStudents = snapshot.val() || {};
-            renderTable();
+            // نحتفظ بكلمة البحث الحالية أثناء التحديث اللحظي لكي لا يختفي البحث
+            const currentSearch = document.getElementById('searchInput').value.trim();
+            renderTable(currentSearch);
         });
 
         function renderTable(searchTerm = "") {
             const tbody = document.getElementById('studentsTableBody');
             tbody.innerHTML = '';
+            
+            let hasResults = false;
+
+            // تحويل مصطلح البحث لحروف صغيرة لتسهيل التطابق
+            const term = searchTerm.toLowerCase();
+
             for (let phone in allStudents) {
                 const st = allStudents[phone];
+                const studentName = (st.name || "").toLowerCase();
+                
                 // فلترة البحث
-                if (st.name.includes(searchTerm) || phone.includes(searchTerm)) {
+                if (studentName.includes(term) || phone.includes(term)) {
+                    hasResults = true;
                     tbody.innerHTML += `
                         <tr>
-                            <td>${st.name}</td>
-                            <td>${phone}</td>
+                            <td><strong>${st.name}</strong></td>
+                            <td style="color: var(--primary); font-weight: 800;">${phone}</td>
                             <td>${st.center}</td>
-                            <td><button class="delete-btn" onclick="deleteStudent('${phone}', '${st.name}')">🗑️ حذف الطالب</button></td>
+                            <td style="text-align: center;">
+                                <button class="delete-btn" onclick="deleteStudent('${phone}', '${st.name}')">🗑️ حذف</button>
+                            </td>
                         </tr>
                     `;
                 }
             }
+
+            if (!hasResults) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--danger); font-weight:700;">❌ لا يوجد طالب يطابق عملية البحث.</td></tr>`;
+            }
         }
 
+        // دالة مرتبطة بمربع البحث
         function filterStudents() {
             const term = document.getElementById('searchInput').value.trim();
             renderTable(term);
         }
 
+        // دالة الحذف القوية
         function deleteStudent(phone, name) {
-            const confirmDelete = confirm(`هل أنت متأكد من حذف الطالب (${name}) نهائياً؟ لا يمكن التراجع عن هذا الإجراء!`);
+            const confirmDelete = confirm(`⚠️ هل أنت متأكد من حذف الطالب (${name}) نهائياً؟\nسيتم مسح جميع بياناته ونتائجه ولا يمكن التراجع عن هذا الإجراء!`);
+            
             if (confirmDelete) {
                 database.ref('students/' + phone).remove()
-                .then(() => alert("✅ تم مسح الطالب بنجاح!"))
-                .catch(err => alert("❌ حدث خطأ أثناء الحذف."));
+                .then(() => {
+                    alert("✅ تم مسح الطالب من النظام بنجاح!");
+                })
+                .catch(err => {
+                    alert("❌ حدث خطأ أثناء الحذف. تأكد من اتصالك بالإنترنت.");
+                });
             }
         }
     </script>
