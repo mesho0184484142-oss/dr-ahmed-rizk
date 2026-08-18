@@ -10,6 +10,9 @@
     <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- مكتبة تحويل HTML إلى PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         body { font-family: 'Cairo', sans-serif !important; background-color: #f4f7fe !important; color: #2b3674 !important; margin: 0 !important; display: flex !important; min-height: 100vh !important; text-align: right !important; scroll-behavior: smooth; }
@@ -28,17 +31,17 @@
 
         .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; margin-bottom: 40px; justify-content: start; }
         
-        .exam-card, .sheet-card { background: #ffffff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); text-align: right !important; border: 1px solid #e0e5f2; transition: transform 0.3s; }
+        .exam-card, .sheet-card { background: #ffffff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); text-align: right !important; border: 1px solid #e0e5f2; transition: transform 0.3s; display: flex; flex-direction: column; }
         .exam-card:hover { transform: translateY(-5px); border-color: #4318FF; }
         .exam-card h4 { color: #4318FF; font-size: 18px; margin-top: 0; margin-bottom: 15px; }
         .exam-card p { color: #a3aed1; font-weight: 600; margin: 8px 0; font-size: 14px; }
-        .start-btn { background: #4318FF; color: #ffffff; border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 700; width: 100%; transition: 0.3s; margin-top: 15px; font-family: 'Cairo'; text-align: center !important; }
+        .start-btn { background: #4318FF; color: #ffffff; border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 700; width: 100%; transition: 0.3s; margin-top: auto; font-family: 'Cairo'; text-align: center !important; }
         .start-btn:hover { background: #2b3674; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 
-        /* ستايل للامتحانات اللي خلصت */
         .completed-card { border-color: #05CD99 !important; background: #f4fff9 !important; }
         .completed-card h4 { color: #05CD99 !important; }
-        .completed-btn { background: #a3aed1 !important; cursor: not-allowed !important; box-shadow: none !important; }
+        .pdf-btn { background: #2b3674 !important; margin-top: 15px; }
+        .pdf-btn:hover { background: #1a224a !important; box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important; }
 
         @media (max-width: 768px) {
             body { flex-direction: column !important; }
@@ -71,7 +74,7 @@
         <h2 id="welcomeMessage">جاري تحميل البيانات... ⏳</h2>
         <p id="studentCenter"></p>
 
-        <!-- قسم الامتحانات المتاحة (لم يتم حلها) -->
+        <!-- قسم الامتحانات المتاحة -->
         <div id="examsSection">
             <div class="section-title">📝 الامتحانات المتاحة الآن</div>
             <div class="cards-grid" id="availableExamsContainer">
@@ -79,14 +82,13 @@
             </div>
         </div>
 
-        <!-- قسم الامتحانات السابقة (التي تم حلها) -->
+        <!-- قسم الامتحانات المنجزة -->
         <div style="margin-top: 50px;">
             <div class="section-title">✅ الامتحانات التي تم إنجازها</div>
             <div class="cards-grid" id="completedExamsContainer">
                 <p style="text-align: right; width: 100%; color: #a3aed1;">جاري البحث عن امتحانات سابقة...</p>
             </div>
         </div>
-
     </div>
 
     <script>
@@ -126,12 +128,10 @@
             const availableContainer = document.getElementById('availableExamsContainer');
             const completedContainer = document.getElementById('completedExamsContainer');
             
-            // 1. نجيب الأول الامتحانات اللي الطالب حلها عشان نعزلها
             database.ref(`students/${currentPhone}/results`).once('value').then(resultsSnapshot => {
                 const studentResults = resultsSnapshot.val() || {};
                 const completedExamIds = Object.keys(studentResults); 
 
-                // 2. نجيب كل الامتحانات المرفوعة على المنصة
                 database.ref('exams').on('value', examsSnapshot => {
                     availableContainer.innerHTML = ''; 
                     completedContainer.innerHTML = '';
@@ -144,10 +144,7 @@
                         for (let examId in exams) {
                             const exam = exams[examId];
                             
-                            // هل الامتحان مخصص للسنتر بتاع الطالب؟
                             if (exam.center === "all" || exam.center === currentStudentData.center) {
-                                
-                                // هل الطالب حل الامتحان ده قبل كده؟
                                 if (completedExamIds.includes(examId)) {
                                     hasCompleted = true;
                                     const res = studentResults[examId];
@@ -156,7 +153,7 @@
                                             <h4>✅ ${exam.name}</h4>
                                             <p>📌 درجتك: <strong style="color:#05CD99;">${res.score} / ${res.total}</strong></p>
                                             <p>📅 تاريخ الحل: ${res.dateTaken.split(',')[0]}</p>
-                                            <button class="start-btn completed-btn" disabled>تم التسليم المسبق</button>
+                                            <button class="start-btn pdf-btn" onclick="downloadExamReport('${examId}')">📥 تحميل التقرير (PDF)</button>
                                         </div>
                                     `;
                                 } else {
@@ -173,29 +170,99 @@
                             }
                         }
 
-                        if (!hasAvailable) {
-                            availableContainer.innerHTML = '<p style="text-align: right; width: 100%; color: #a3aed1; font-weight: 700;">لا توجد امتحانات متاحة لك حالياً. استرح قليلاً! ☕</p>';
-                        }
-                        if (!hasCompleted) {
-                            completedContainer.innerHTML = '<p style="text-align: right; width: 100%; color: #a3aed1; font-weight: 700;">لم تقم بإنجاز أي امتحانات حتى الآن.</p>';
-                        }
+                        if (!hasAvailable) availableContainer.innerHTML = '<p style="text-align: right; width: 100%; color: #a3aed1;">لا توجد امتحانات متاحة لك حالياً.</p>';
+                        if (!hasCompleted) completedContainer.innerHTML = '<p style="text-align: right; width: 100%; color: #a3aed1;">لم تقم بإنجاز أي امتحانات حتى الآن.</p>';
 
                     } else {
-                        availableContainer.innerHTML = '<p style="text-align: right; width: 100%; color: #a3aed1; font-weight: 700;">لا توجد امتحانات متاحة لك حالياً.</p>';
-                        completedContainer.innerHTML = '<p style="text-align: right; width: 100%; color: #a3aed1; font-weight: 700;">لم تقم بإنجاز أي امتحانات حتى الآن.</p>';
+                        availableContainer.innerHTML = '<p style="text-align: right; width: 100%; color: #a3aed1;">لا توجد امتحانات متاحة.</p>';
+                        completedContainer.innerHTML = '<p style="text-align: right; width: 100%; color: #a3aed1;">لم تقم بإنجاز امتحانات.</p>';
                     }
                 });
             });
         }
 
-        function goToExam(examId) {
-            window.location.href = `take_exam.html?id=${examId}`;
+        // =========================================
+        // وظيفة توليد وتحميل ملف الـ PDF 🚀
+        // =========================================
+        function downloadExamReport(examId) {
+            alert("⏳ جاري تجهيز التقرير... قد يستغرق الأمر ثواني قليلة لإنشاء ملف الـ PDF.");
+
+            // 1. جلب بيانات الامتحان والأسئلة
+            database.ref('exams/' + examId).once('value').then(examSnap => {
+                const examData = examSnap.val();
+
+                // 2. جلب نتيجة الطالب في هذا الامتحان
+                database.ref(`students/${currentPhone}/results/${examId}`).once('value').then(resSnap => {
+                    const resData = resSnap.val();
+                    const percentage = ((resData.score / resData.total) * 100).toFixed(1);
+                    const statusColor = percentage >= 50 ? "#05CD99" : "#EE5D50";
+                    const statusText = percentage >= 50 ? "ناجح" : "راسب";
+
+                    // 3. بناء هيكل الـ PDF في الذاكرة (مخفي)
+                    const reportDiv = document.createElement('div');
+                    reportDiv.style.padding = "40px";
+                    reportDiv.style.fontFamily = "'Cairo', sans-serif";
+                    reportDiv.style.direction = "rtl";
+                    reportDiv.style.textAlign = "right";
+                    reportDiv.style.backgroundColor = "#fff";
+                    reportDiv.style.color = "#2b3674";
+
+                    let htmlContent = `
+                        <!-- ترويسة المنصة -->
+                        <div style="text-align: center; border-bottom: 3px solid #4318FF; padding-bottom: 15px; margin-bottom: 30px;">
+                            <h1 style="color: #4318FF; margin: 0; font-size: 28px;">منصة د. أحمد رزق</h1>
+                            <h2 style="color: #a3aed1; margin: 10px 0 0 0; font-size: 18px;">تقرير أداء طالب ونموذج الإجابة</h2>
+                        </div>
+
+                        <!-- بيانات الطالب والامتحان -->
+                        <div style="background: #f4f7fe; padding: 20px; border-radius: 15px; margin-bottom: 30px; border: 1px solid #e0e5f2;">
+                            <table style="width: 100%; font-size: 16px; font-weight: bold;">
+                                <tr>
+                                    <td style="padding: 8px;">👨‍🎓 اسم الطالب: <span style="color: #4318FF;">${currentStudentData.name}</span></td>
+                                    <td style="padding: 8px;">📝 اسم الامتحان: ${resData.examName}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">📅 تاريخ الأداء: ${resData.dateTaken.split(',')[0]}</td>
+                                    <td style="padding: 8px;">📌 الدرجة المحصلة: <span style="color: ${statusColor};">${resData.score} / ${resData.total}</span></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">📊 النسبة المئوية: <span style="color: ${statusColor};">${percentage}%</span> (${statusText})</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- الأسئلة والإجابات الصحيحة -->
+                        <h3 style="border-bottom: 2px dashed #e0e5f2; padding-bottom: 10px; margin-bottom: 20px; color: #2b3674;">📝 الأسئلة ونموذج الإجابة المعتمد:</h3>
+                    `;
+
+                    examData.questions.forEach((q, idx) => {
+                        htmlContent += `
+                            <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #e0e5f2; border-radius: 10px; background: #ffffff; page-break-inside: avoid;">
+                                <h4 style="margin: 0 0 10px 0; color: #2b3674; font-size: 16px;">س${idx + 1}: ${q.questionText}</h4>
+                                <p style="margin: 0; color: #05CD99; font-weight: 800; font-size: 14px;">✅ الإجابة الصحيحة: ${q.options[q.correctAnswerIndex]}</p>
+                            </div>
+                        `;
+                    });
+
+                    reportDiv.innerHTML = htmlContent;
+
+                    // 4. إعدادات مكتبة html2pdf
+                    const opt = {
+                        margin:       10,
+                        filename:     `تقرير_${currentStudentData.name}_${resData.examName}.pdf`,
+                        image:        { type: 'jpeg', quality: 0.98 },
+                        html2canvas:  { scale: 2, useCORS: true },
+                        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+
+                    // 5. التوليد والتحميل
+                    html2pdf().set(opt).from(reportDiv).save();
+                });
+            });
         }
 
-        function logoutUser() {
-            localStorage.removeItem('currentLoggedInStudent');
-            window.location.href = "../auth/login.html";
-        }
+        function goToExam(examId) { window.location.href = `take_exam.html?id=${examId}`; }
+        function logoutUser() { localStorage.removeItem('currentLoggedInStudent'); window.location.href = "../auth/login.html"; }
     </script>
 </body>
 </html>
