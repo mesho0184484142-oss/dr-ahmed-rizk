@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم الدكتور - منصة د. أحمد رزق</title>
+    <title>لوحة تحكم الإدارة - منصة د. أحمد رزق</title>
+    <!-- استدعاء الخطوط وتنسيقات لوحة التحكم الأساسية -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
     
     <!-- مكتبات Firebase -->
@@ -13,60 +13,117 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        /* التنسيقات الفخمة والتجاوب */
-        body { font-family: 'Cairo', sans-serif !important; background-color: #f4f7fe !important; color: #2b3674 !important; margin: 0 !important; display: flex !important; min-height: 100vh !important; }
-        .sidebar { width: 280px !important; background: #ffffff !important; box-shadow: -5px 0 20px rgba(0,0,0,0.05) !important; position: fixed !important; right: 0 !important; top: 0 !important; height: 100vh !important; padding: 30px 20px !important; z-index: 1000 !important; box-sizing: border-box !important; overflow-y: auto !important; }
-        .sidebar h3 { color: #2b3674 !important; font-weight: 800 !important; text-align: center !important; margin-bottom: 40px !important; font-size: 22px !important; }
-        .sidebar ul { list-style: none !important; padding: 0 !important; margin: 0 !important; }
-        .sidebar ul li { margin-bottom: 10px !important; }
-        .sidebar ul li a { display: block !important; padding: 15px 20px !important; color: #a3aed1 !important; text-decoration: none !important; font-weight: 700 !important; border-radius: 12px !important; transition: all 0.3s ease !important; }
-        .sidebar ul li a.active, .sidebar ul li a:hover { background: #4318FF !important; color: #ffffff !important; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2) !important; }
-        .main-content { margin-right: 280px !important; padding: 40px !important; width: calc(100% - 280px) !important; box-sizing: border-box !important; }
-        h2 { font-weight: 800; color: #2b3674; margin-bottom: 30px; font-size: 28px; margin-top: 0; }
-        .card { background: #ffffff !important; border-radius: 20px !important; padding: 30px !important; box-shadow: 0 10px 30px rgba(0,0,0,0.03) !important; border: none !important; margin-bottom: 30px !important; }
-        .card h3 { color: #2b3674; font-size: 20px; margin-bottom: 25px; border-bottom: 2px solid #f4f7fe; padding-bottom: 15px; margin-top: 0;}
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 30px; }
-        .stat-box { padding: 30px; border-radius: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 10px 20px rgba(0,0,0,0.05); color: white; transition: transform 0.3s ease; }
-        .stat-box:hover { transform: translateY(-5px); }
-        .stat-box.total-students { background: linear-gradient(135deg, #4318FF 0%, #868CFF 100%); }
-        .stat-box.active-students { background: linear-gradient(135deg, #05CD99 0%, #43E794 100%); }
-        .stat-box.total-centers { background: linear-gradient(135deg, #FFB547 0%, #FFD285 100%); }
-        .stat-box .info h4 { margin: 0 0 10px 0; font-size: 18px; font-weight: 600; opacity: 0.9; }
-        .stat-box .info span { font-size: 40px; font-weight: 800; line-height: 1; }
-        .stat-box .icon { font-size: 50px; opacity: 0.8; }
-        #centersStatsContainer { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-        .center-stat-card { background: #f4f7fe; padding: 20px; border-radius: 15px; text-align: center; border: 1px solid #e2e8f0; transition: 0.3s; }
-        .center-stat-card:hover { border-color: #4318FF; background: #ffffff; box-shadow: 0 5px 15px rgba(67, 24, 255, 0.1); }
-        .center-stat-card h5 { color: #a3aed1; font-size: 16px; margin: 0 0 10px 0; font-weight: 700; }
-        .center-stat-card span { font-size: 30px; font-weight: 800; color: #2b3674; }
-        .form-control-group { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; }
-        input[type="text"], select { padding: 15px !important; border-radius: 12px !important; border: 1px solid #e0e5f2 !important; background: #f4f7fe !important; color: #2b3674 !important; font-weight: 600 !important; outline: none !important; flex: 1; box-sizing: border-box; width: 100%; }
-        input[type="text"]:focus, select:focus { border-color: #4318FF !important; background: #ffffff !important; }
-        .upload-btn { border-radius: 12px !important; font-weight: 700 !important; padding: 15px 25px !important; transition: 0.3s !important; border: none !important; cursor: pointer !important; box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important; color: white !important; display: inline-block; text-align: center; white-space: nowrap; margin: 0 !important; }
-        .upload-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(0,0,0,0.15) !important; }
-        .btn-primary { background: #4318FF !important; }
-        .btn-success { background: #05CD99 !important; }
-        .btn-danger { background: #EE5D50 !important; }
-        .btn-dark { background: #2b3674 !important; }
-        .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { background: #f4f7fe; color: #a3aed1; font-weight: 700; padding: 15px; text-align: right; border-bottom: none; }
-        td { padding: 15px; border-bottom: 1px solid #f4f7fe; color: #2b3674; font-weight: 600; }
-        tr:hover td { background: #f9fbfd; }
-        .status-pass { background: rgba(5, 205, 153, 0.1); color: #05CD99; padding: 5px 12px; border-radius: 20px; font-size: 13px; }
+        /* =========================================
+           تنسيقات الإحصائيات (Stats Cards)
+           ========================================= */
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 25px; 
+            margin-bottom: 30px; 
+        }
         
+        .stat-box { 
+            padding: 30px; 
+            border-radius: 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            color: white; 
+            transition: all 0.3s ease; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+        
+        .stat-box:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        
+        /* ألوان الكروت التدرجية */
+        .total-students { background: linear-gradient(135deg, var(--primary) 0%, #6b4cff 100%); }
+        .active-students { background: linear-gradient(135deg, var(--success) 0%, #04b082 100%); }
+        .total-centers { background: linear-gradient(135deg, var(--warning) 0%, #ff9d00 100%); }
+        
+        .stat-box .info h4 { margin: 0 0 10px 0; font-size: 18px; font-weight: 700; opacity: 0.9; }
+        .stat-box .info span { font-size: 45px; font-weight: 800; line-height: 1; }
+        .stat-box .icon { font-size: 55px; opacity: 0.8; }
+
+        /* =========================================
+           تنسيقات كثافة السناتر
+           ========================================= */
+        #centersStatsContainer { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+            gap: 20px; 
+        }
+        
+        .center-stat-card { 
+            background: var(--bg-light); 
+            padding: 25px; 
+            border-radius: 15px; 
+            text-align: center; 
+            border: 1px solid var(--border-color); 
+            transition: all 0.3s ease; 
+        }
+        
+        .center-stat-card:hover { 
+            border-color: var(--primary); 
+            background: var(--card-bg); 
+            box-shadow: 0 5px 15px rgba(67, 24, 255, 0.1); 
+            transform: translateY(-3px);
+        }
+        
+        .center-stat-card h5 { color: var(--secondary); font-size: 16px; margin: 0 0 10px 0; font-weight: 800; }
+        .center-stat-card span { font-size: 35px; font-weight: 800; color: var(--primary); }
+
+        /* =========================================
+           تنسيقات قسم الإدارة (الإجراءات)
+           ========================================= */
+        .actions-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 30px; 
+            margin-bottom: 30px; 
+        }
+        
+        .form-control-group { 
+            display: flex; 
+            gap: 15px; 
+            align-items: stretch; 
+            margin-bottom: 20px; 
+        }
+
+        .upload-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            margin: 0;
+            border-radius: 12px;
+            padding: 0 25px;
+        }
+
+        .action-container {
+            background: var(--bg-light);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 0;
+            border: 1px dashed var(--border-color);
+        }
+
+        /* تنسيق خاص لعنوان الجدول في لوحة التحكم */
+        .table-header-controls {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 25px; 
+            flex-wrap: wrap; 
+            gap: 15px;
+            border-bottom: 2px solid var(--bg-light);
+            padding-bottom: 15px;
+        }
+
         @media (max-width: 768px) {
-            body { flex-direction: column !important; }
-            .sidebar { position: relative !important; width: 100% !important; height: auto !important; padding: 20px !important; box-shadow: 0 5px 15px rgba(0,0,0,0.05) !important; }
-            .sidebar ul { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; justify-content: center !important; }
-            .sidebar ul li { margin-bottom: 0 !important; }
-            .sidebar ul li a { padding: 10px 15px !important; font-size: 14px !important; }
-            .main-content { margin-right: 0 !important; width: 100% !important; padding: 20px !important; }
-            .stats-grid, .actions-grid { grid-template-columns: 1fr !important; gap: 20px; }
-            .form-control-group { flex-direction: column !important; align-items: stretch !important; }
-            .upload-btn { width: 100% !important; margin-bottom: 10px !important; margin-left: 0 !important; }
-            #resultsSection { overflow-x: auto !important; }
-            table { min-width: 600px !important; }
+            .stats-grid, .actions-grid { grid-template-columns: 1fr; gap: 20px; }
+            .form-control-group { flex-direction: column; }
+            .upload-btn { padding: 15px; width: 100%; }
         }
     </style>
 </head>
@@ -86,7 +143,7 @@
 
     <!-- المحتوى الرئيسي -->
     <div class="main-content">
-        <h2>👋 مرحباً بك في لوحة القيادة يا دكتور!</h2>
+        <h2>👋 مرحباً بك في لوحة القيادة!</h2>
         
         <!-- الإحصائيات -->
         <div class="stats-grid">
@@ -113,49 +170,59 @@
             </div>
         </div>
 
-        <div class="card" id="statsCard">
+        <div class="card">
             <h3>📍 كثافة الطلاب داخل السناتر</h3>
             <div id="centersStatsContainer">
                 <!-- سيتم التوليد تلقائياً من Firebase -->
             </div>
         </div>
 
-        <!-- الإجراءات -->
+        <!-- الإجراءات الإدارية -->
         <div class="actions-grid">
-            <div class="card" style="margin-bottom: 0 !important;">
+            <!-- كارت إدارة السناتر -->
+            <div class="card" style="margin-bottom: 0;">
                 <h3>🏢 إدارة السناتر والمجموعات</h3>
+                
                 <div class="form-control-group">
-                    <input type="text" id="newCenterName" placeholder="اسم السنتر الجديد...">
-                    <button class="upload-btn btn-success" onclick="addNewCenter()">➕ إضافة</button>
+                    <input type="text" id="newCenterName" placeholder="اكتب اسم السنتر الجديد...">
+                    <button class="upload-btn" style="background: var(--success);" onclick="addNewCenter()">➕ إضافة</button>
                 </div>
-                <div class="form-control-group" style="background: #f4f7fe; padding: 15px; border-radius: 12px; margin-bottom: 0;">
-                    <select id="centersDeleteDropdown"><option value="">-- جاري تحميل السناتر --</option></select>
-                    <button class="upload-btn btn-danger" onclick="removeCenter()">🗑️ حذف</button>
+                
+                <div class="form-control-group action-container">
+                    <select id="centersDeleteDropdown">
+                        <option value="">-- جاري تحميل السناتر --</option>
+                    </select>
+                    <button class="upload-btn" style="background: var(--danger);" onclick="removeCenter()">🗑️ حذف</button>
                 </div>
             </div>
 
-            <div class="card" style="margin-bottom: 0 !important;">
+            <!-- كارت إدارة الصلاحيات -->
+            <div class="card" style="margin-bottom: 0;">
                 <h3>👥 إدارة المساعدين والصلاحيات</h3>
+                
                 <div class="form-control-group">
-                    <button class="upload-btn btn-primary" onclick="window.location.href='add_exam.html'" style="flex: 1;">📝 رفع امتحان</button>
-                    <button class="upload-btn btn-dark" onclick="addNewAdmin()" style="flex: 1;">👤 إضافة مساعد جديد</button>
+                    <button class="upload-btn" style="background: var(--primary); flex: 1;" onclick="window.location.href='add_exam.html'">📝 رفع امتحان</button>
+                    <button class="upload-btn" style="background: var(--dark-text); flex: 1;" onclick="addNewAdmin()">👤 إضافة مساعد جديد</button>
                 </div>
-                <div class="form-control-group" style="background: #fff5f5; padding: 15px; border-radius: 12px; border: 1px solid #ffe3e3; margin-bottom: 0;">
-                    <select id="adminsDropdown"><option value="">-- جاري تحميل المساعدين --</option></select>
-                    <button class="upload-btn btn-danger" onclick="removeSelectedAdmin()">إزالة الصلاحية</button>
+                
+                <div class="form-control-group action-container" style="background: #fff5f5; border-color: #ffe3e3;">
+                    <select id="adminsDropdown">
+                        <option value="">-- جاري تحميل المساعدين --</option>
+                    </select>
+                    <button class="upload-btn" style="background: var(--danger);" onclick="removeSelectedAdmin()">إزالة الصلاحية</button>
                 </div>
             </div>
         </div>
 
-        <!-- جدول الطلاب (مرتبط بـ Firebase) -->
+        <!-- جدول الطلاب المسجلين -->
         <div class="card" id="resultsSection">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+            <div class="table-header-controls">
                 <h3 style="margin: 0; border: none; padding: 0;">📋 سجل الطلاب المسجلين</h3>
                 <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                    <select id="centerFilter" onchange="filterResults()" style="width: auto;">
+                    <select id="centerFilter" onchange="filterResults()" style="width: auto; min-width: 200px;">
                         <option value="all">كل السناتر</option>
                     </select>
-                    <button class="upload-btn btn-primary" onclick="window.print()">🖨️ طباعة التقرير</button>
+                    <button class="upload-btn" style="background: var(--primary);" onclick="window.print()">🖨️ طباعة السجل</button>
                 </div>
             </div>
 
@@ -239,13 +306,13 @@
             const container = document.getElementById('centersStatsContainer');
             container.innerHTML = ''; 
             if (Object.keys(centerCounts).length === 0) {
-                container.innerHTML = '<p>لا توجد سناتر مسجلة.</p>';
+                container.innerHTML = '<p style="color:var(--secondary); font-weight:600;">لا توجد سناتر مسجلة.</p>';
             } else {
                 for (let center in centerCounts) {
                     container.innerHTML += `
                         <div class="center-stat-card">
                             <h5>${center}</h5>
-                            <span>${centerCounts[center]} <small style="font-size:14px; color:#a3aed1;">طالب</small></span>
+                            <span>${centerCounts[center]} <small style="font-size:14px; color:var(--secondary);">طالب</small></span>
                         </div>
                     `;
                 }
@@ -261,7 +328,7 @@
                 const student = currentStudents[phone];
                 tbody.innerHTML += `
                     <tr>
-                        <td>${student.name}</td>
+                        <td><strong>${student.name}</strong></td>
                         <td>${phone}</td>
                         <td class="center-col">${student.center}</td>
                         <td>${student.parentPhone}</td>
@@ -314,22 +381,30 @@
         }
 
         function addNewAdmin() {
-            const adminUser = prompt("أدخل اسم المستخدم للأدمن الجديد:");
-            if (!adminUser) return;
-            const adminPass = prompt("أدخل الرقم السري للأدمن الجديد:");
+            const adminPhone = prompt("أدخل رقم هاتف المساعد الجديد (سيكون هو اسم المستخدم للدخول):");
+            if (!adminPhone) return;
+
+            if (isNaN(adminPhone) || adminPhone.trim() === "" || adminPhone.length < 10) {
+                alert("⚠️ يرجى إدخال رقم هاتف صحيح!");
+                return;
+            }
+
+            const adminPass = prompt("أدخل الرقم السري للمساعد الجديد:");
             if (!adminPass) return;
 
-            database.ref('admins/' + adminUser).set(adminPass).then(() => {
-                alert(`✅ تم إضافة المساعد بنجاح!`);
+            database.ref('admins/' + adminPhone).set(adminPass).then(() => {
+                alert(`✅ تم إضافة المساعد برقم (${adminPhone}) بنجاح!`);
+            }).catch(error => {
+                alert("❌ حدث خطأ أثناء إضافة المساعد.");
             });
         }
 
         function removeSelectedAdmin() {
             const selectedAdmin = document.getElementById('adminsDropdown').value;
-            if (!selectedAdmin) return alert("⚠️ يرجى اختيار اسم المساعد أولاً.");
-            if (confirm(`هل أنت متأكد من حذف صلاحيات المساعد (${selectedAdmin})؟`)) {
+            if (!selectedAdmin) return alert("⚠️ يرجى اختيار رقم المساعد أولاً.");
+            if (confirm(`هل أنت متأكد من حذف صلاحيات المساعد صاحب الرقم (${selectedAdmin})؟`)) {
                 database.ref('admins/' + selectedAdmin).remove().then(() => {
-                    alert(`✅ تم الحذف بنجاح!`);
+                    alert(`✅ تم سحب الصلاحيات بنجاح!`);
                 });
             }
         }
