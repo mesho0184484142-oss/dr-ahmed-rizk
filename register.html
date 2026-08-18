@@ -102,7 +102,21 @@
             firebase.initializeApp(firebaseConfig);
         }
         const database = firebase.database();
-
+// ==========================================
+        // 0. جلب السناتر من السيرفر وعرضها للطلاب
+        // ==========================================
+        database.ref('centers').on('value', (snapshot) => {
+            const centers = snapshot.val() || ["سنتر ألفا", "سنتر المجد"]; // لو مفيش، هيعرض دول كافتراضي
+            const centerSelect = document.getElementById('regCenter');
+            
+            // تفريغ القائمة القديمة والاحتفاظ بالخيار الأول فقط
+            centerSelect.innerHTML = '<option value="" disabled selected>-- اختر السنتر التابع له --</option>';
+            
+            // وضع السناتر اللي راجعة من السيرفر
+            centers.forEach(center => {
+                centerSelect.innerHTML += `<option value="${center}">${center}</option>`;
+            });
+        });
         // ==========================================
         // 2. منطق التسجيل والـ OTP
         // ==========================================
