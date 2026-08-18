@@ -9,7 +9,14 @@
     <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
+    <!-- مكتبة EmailJS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function(){
+            // ضع مفتاح Public Key الخاص بك هنا
+            emailjs.init("ضع_الـ_Public_Key_هنا");
+        })();
+    </script>
     <style>
         body { font-family: 'Cairo', sans-serif !important; background-color: #f4f7fe; color: #2b3674; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
         
@@ -152,14 +159,30 @@
                 };
 
                 generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
-                alert(`[تنبيه للمطور]\nكود التحقق الخاص بك هو: ${generatedOTP}`);
 
-                document.getElementById('registrationFormContainer').style.display = 'none';
-                document.getElementById('otpFormContainer').style.display = 'block';
-                document.getElementById('otpMessage').innerText = `أرسلنا كود تحقق إلى: ${email}`;
-                
-                submitBtn.innerText = "إرسال كود التحقق ✉️";
-                submitBtn.disabled = false;
+                // تجهيز المتغيرات للإرسال عبر EmailJS
+                const templateParams = {
+                    to_name: pendingUserData.name,
+                    to_email: email,
+                    otp_code: generatedOTP
+                };
+
+                submitBtn.innerText = "⏳ جاري إرسال الإيميل...";
+
+                // إرسال الإيميل باستخدام Service ID و Template ID
+                emailjs.send('service_y9671et', 'ضع_الـ_Template_ID_هنا', templateParams)
+                    .then(function(response) {
+                        document.getElementById('registrationFormContainer').style.display = 'none';
+                        document.getElementById('otpFormContainer').style.display = 'block';
+                        document.getElementById('otpMessage').innerText = `أرسلنا كود تحقق إلى: ${email}`;
+                        
+                        submitBtn.innerText = "إرسال كود التحقق ✉️";
+                        submitBtn.disabled = false;
+                    }, function(error) {
+                        alert("❌ فشل إرسال الإيميل. تأكد من صحة البريد الإلكتروني.");
+                        submitBtn.innerText = "إرسال كود التحقق ✉️";
+                        submitBtn.disabled = false;
+                    });
             }).catch((error) => {
                 alert("❌ حدث خطأ في الاتصال بالسيرفر.");
                 submitBtn.innerText = "إرسال كود التحقق ✉️";
