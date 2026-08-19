@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الدخول - منصة د. أحمد رزق</title>
+    <title>تسجيل الدخول - المنصة التعليمية</title>
     <!-- ربط ملف التنسيق الموحد -->
     <link rel="stylesheet" href="../assets/css/style.css">
     
@@ -12,6 +12,15 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
+
+    <!-- تطبيق متغيرات الألوان المحفوظة -->
+    <script>
+        const savedColor = localStorage.getItem('primaryColor') || "#4318FF";
+        const savedName = localStorage.getItem('platformName') || "منصة د. أحمد رزق";
+        
+        document.documentElement.style.setProperty('--primary', savedColor);
+        document.title = `تسجيل الدخول - ${savedName}`;
+    </script>
 
     <div class="container">
         <h2>🔐 تسجيل الدخول</h2>
@@ -40,10 +49,10 @@
                 <a href="forgot_password.html" style="color: var(--danger); font-size: 14px; font-weight: 700;">هل نسيت كلمة المرور؟</a>
             </div>
 
-            <button type="submit" id="loginBtn">تسجيل الدخول 🚀</button>
+            <button type="submit" id="loginBtn" style="background: var(--primary); box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: 800; cursor: pointer; transition: 0.3s; font-family: 'Cairo';">تسجيل الدخول 🚀</button>
             
             <p style="text-align: center; margin-top: 20px; font-weight: 600; font-size: 15px;">
-                ليس لديك حساب؟ <a href="../register.html">إنشاء حساب جديد</a>
+                ليس لديك حساب؟ <a href="../register.html" style="color: var(--primary);">إنشاء حساب جديد</a>
             </p>
         </form>
     </div>
@@ -121,23 +130,11 @@
                     
                     if (loginType === "student") {
                         if (studentData.password === password) {
-                            // التعديل يبدأ من هنا: حفظ بيانات المرحلة لتخصيص الواجهة لاحقاً
+                            // حفظ رقم الهاتف في الجلسة ليتم استخدامه في شاشة الطالب
                             localStorage.setItem('currentLoggedInStudent', username);
-                            localStorage.setItem('studentUniversity', studentData.university || 'none');
-                            localStorage.setItem('studentGrade', studentData.grade || 'none');
 
-                            // التوجيه الذكي لشاشات مختلفة بناءً على الجامعة
-                            const uni = studentData.university;
-                            if (uni === 'alex_uni') {
-                                window.location.href = "../student/alex_uni/index.html";
-                            } else if (uni === 'damanhour_uni') {
-                                window.location.href = "../student/damanhour_uni/index.html";
-                            } else if (uni === 'baccalaureate') {
-                                window.location.href = "../student/baccalaureate/index.html";
-                            } else {
-                                // للطلاب القدامى أو في حالة عدم وجود جامعة مسجلة
-                                window.location.href = "../student/index.html";
-                            }
+                            // 🚀 التوجيه الموحد: كل الطلاب يذهبون لنفس الشاشة الذكية
+                            window.location.href = "../student/index.html";
                         } else {
                             alert("❌ الرقم السري للطالب غير صحيح!");
                             resetBtn();
