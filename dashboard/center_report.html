@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التقارير والإحصائيات - المنصة التعليمية</title>
+    <!-- ربط ملفات التصميم -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    
+    <!-- مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --primary: #4318FF;
+            --primary-hover: #3210cc;
+            --secondary: #a3aed1;
+            --success: #05CD99;
+            --danger: #EE5D50;
+            --dark-text: #2b3674;
+            --bg-light: #f4f7fe;
+            --card-bg: #ffffff;
+            --border-color: #e0e5f2;
+        }
+
+        body { font-family: 'Cairo', sans-serif; background: var(--bg-light); color: var(--dark-text); }
+
+        /* تنسيقات الفلاتر */
+        .filters-section { 
+            display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; 
+            background: var(--card-bg); padding: 25px; border-radius: 20px;
+            margin-bottom: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+            border: 1px solid var(--border-color);
+        }
+        
+        .form-group { flex: 1; min-width: 250px; margin-bottom: 0; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 700; color: var(--dark-text); }
+        .form-group select { 
+            width: 100%; padding: 12px 15px; border: 2px solid var(--border-color); 
+            border-radius: 12px; font-family: 'Cairo'; font-size: 15px; outline: none; transition: 0.3s;
+        }
+        .form-group select:focus { border-color: var(--primary); }
+
+        .action-btn { 
+            background: var(--primary); color: white; border: none; padding: 14px 30px; 
+            border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; 
+            font-family: 'Cairo'; height: 50px; box-shadow: 0 5px 15px rgba(67, 24, 255, 0.2);
+        }
+        .action-btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
+        
+        .print-btn-main { background: var(--success); box-shadow: 0 5px 15px rgba(5, 205, 153, 0.2); }
+        .print-btn-main:hover { background: #04b082; }
+
+        /* تنسيقات الجداول */
+        .card { background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.03); border: 1px solid var(--border-color); margin-bottom: 30px; }
+        .table-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; text-align: right; }
+        th, td { padding: 15px; border-bottom: 1px solid var(--border-color); font-size: 15px; }
+        th { background: #f9fbfd; color: var(--secondary); font-weight: 700; border-top: 1px solid var(--border-color); }
+        tr:hover td { background: #f4f7fe; }
+
+        .score-badge { padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 14px; }
+        .score-pass { background: #e6f9f4; color: var(--success); }
+        .score-fail { background: #fdefee; color: var(--danger); }
+
+        .whatsapp-btn { 
+            background: #25D366; color: white; border: none; padding: 8px 15px; 
+            border-radius: 8px; cursor: pointer; font-weight: 700; font-family: 'Cairo'; 
+            font-size: 13px; text-decoration: none; display: inline-block; transition: 0.3s;
+        }
+        .whatsapp-btn:hover { background: #128C7E; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3); }
+
+        .student-meta { font-size: 13px; color: var(--secondary); display: block; margin-top: 5px; }
+
+        /* إعدادات الطباعة (إخفاء العناصر غير الضرورية عند الطباعة) */
+        @media print {
+            .sidebar, .filters-section, .print-btn-main, .whatsapp-btn { display: none !important; }
+            .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+            .card { box-shadow: none; border: none; padding: 0; }
+            body { background: white; }
+            table { border: 1px solid #ccc; }
+            th, td { border: 1px solid #ccc; padding: 10px; }
+        }
+
+        @media (max-width: 768px) {
+            .filters-section { flex-direction: column; align-items: stretch; }
+            .action-btn { width: 100%; }
+            #reportSection { overflow-x: auto; padding: 15px; }
+            table { min-width: 600px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h3>👨‍🏫 لوحة الإدارة</h3>
+        <ul>
+            <li><a href="index.html">🏠 الرئيسية للإحصائيات</a></li>
+            <li><a href="add_exam.html">📝 بناء امتحان جديد</a></li>
+            <li><a href="center_report.html" class="active">📊 تقارير الدرجات</a></li>
+            <li><a href="manage_students.html">👥 إدارة الطلاب</a></li>
+            <li><a href="../auth/login.html">🚪 تسجيل الخروج</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h2>📊 التقارير التفصيلية ومتابعة المستوى</h2>
+
+        <!-- الفلاتر -->
+        <div class="filters-section">
+            <div class="form-group">
+                <label>اختر الامتحان لاستخراج التقرير:</label>
+                <select id="examSelect">
+                    <option value="" disabled selected>جاري تحميل الامتحانات من قاعدة البيانات...</option>
+                </select>
+            </div>
+            <button class="action-btn" onclick="generateReport()">🔍 عرض وتحليل التقرير</button>
+        </div>
+        
+        <!-- مساحة عرض التقرير -->
+        <div class="card" id="reportSection" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed var(--border-color); padding-bottom: 20px; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <h3 style="margin: 0; color: var(--primary); font-size: 22px;" id="reportTitle">تقرير الامتحان</h3>
+                    <p id="reportTarget" style="margin: 5px 0 0 0; color: var(--secondary); font-weight: 600;"></p>
+                </div>
+                <button class="action-btn print-btn-main" onclick="window.print()">🖨️ طباعة كشف الدرجات</button>
+            </div>
+
+            <!-- الطلاب الحاضرين -->
+            <h4 class="table-title" style="color: var(--success);">✅ الطلاب الذين أدوا الامتحان (ترتيب تنازلي)</h4>
+            <table id="attendedTable">
+                <thead>
+                    <tr>
+                        <th>الترتيب</th>
+                        <th>اسم الطالب</th>
+                        <th>رقم الهاتف</th>
+                        <th>بيانات المرحلة</th>
+                        <th>الدرجة المحصلة</th>
+                    </tr>
+                </thead>
+                <tbody id="attendedTableBody"></tbody>
+            </table>
+
+            <!-- الطلاب الغائبين -->
+            <h4 class="table-title" style="color: var(--danger); margin-top: 40px; padding-top: 20px;">❌ الطلاب المتغيبين عن الامتحان</h4>
+            <table id="absentTable">
+                <thead>
+                    <tr>
+                        <th>اسم الطالب</th>
+                        <th>رقم الهاتف</th>
+                        <th>بيانات المرحلة</th>
+                        <th>رقم ولي الأمر</th>
+                        <th class="print-btn-main">إجراء الإدارة</th>
+                    </tr>
+                </thead>
+                <tbody id="absentTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let allStudents = {};
+        let allExams = {};
+
+        const uniTranslations = {
+            'alex_uni': 'جامعة الإسكندرية',
+            'damanhour_uni': 'جامعة دمنهور',
+            'bachelor': 'بكالوريا',
+            'baccalaureate': 'بكالوريا'
+        };
+
+        const gradeTranslations = {
+            'year_1': 'الفرقة الأولى',
+            'year_2': 'الفرقة الثانية',
+            'year_3': 'الفرقة الثالثة',
+            'year_4': 'الفرقة الرابعة',
+            'none': 'بدون فرقة'
+        };
+
+        window.onload = () => {
+            // جلب الامتحانات
+            database.ref('exams').on('value', snapshot => {
+                const examSelect = document.getElementById('examSelect');
+                if (snapshot.exists()) {
+                    allExams = snapshot.val();
+                    examSelect.innerHTML = '<option value="" disabled selected>-- اختر الامتحان المطلوب --</option>';
+                    
+                    // تحويل كائن الامتحانات لمصفوفة وترتيبها من الأحدث للأقدم
+                    let examsArray = Object.keys(allExams).map(key => ({ id: key, ...allExams[key] }));
+                    examsArray.reverse();
+
+                    examsArray.forEach(exam => {
+                        let targetText = uniTranslations[exam.university] || exam.university;
+                        if(exam.university === 'baccalaureate' || exam.university === 'bachelor') {
+                            targetText += ` - ${exam.center === 'all' ? 'كل السناتر' : exam.center}`;
+                        } else {
+                            targetText += ` - ${gradeTranslations[exam.grade] || exam.grade}`;
+                        }
+                        examSelect.innerHTML += `<option value="${exam.id}">${exam.name} | [${targetText}]</option>`;
+                    });
+                } else {
+                    examSelect.innerHTML = '<option value="" disabled selected>لا توجد امتحانات مسجلة</option>';
+                }
+            });
+
+            // جلب الطلاب في الخلفية
+            database.ref('students').on('value', snapshot => {
+                allStudents = snapshot.val() || {};
+            });
+        }
+
+        function generateReport() {
+            const examId = document.getElementById('examSelect').value;
+            if (!examId) return alert("⚠️ يرجى اختيار امتحان أولاً لعرض التقرير.");
+
+            const selectedExam = allExams[examId];
+            const maxScore = selectedExam.totalScore || selectedExam.totalQuestions || 0;
+            
+            // تحديث العناوين
+            document.getElementById('reportTitle').innerText = `📋 تقرير درجات: ${selectedExam.name}`;
+            
+            let targetMeta = uniTranslations[selectedExam.university] || selectedExam.university;
+            if(selectedExam.university === 'baccalaureate' || selectedExam.university === 'bachelor') {
+                targetMeta += ` / السنتر المستهدف: ${selectedExam.center === 'all' ? 'كل السناتر' : selectedExam.center}`;
+            } else {
+                targetMeta += ` / المرحلة: ${gradeTranslations[selectedExam.grade] || selectedExam.grade}`;
+            }
+            document.getElementById('reportTarget').innerText = `📌 الفئة المستهدفة: ${targetMeta} | الدرجة النهائية: ${maxScore}`;
+            
+            const attendedBody = document.getElementById('attendedTableBody');
+            const absentBody = document.getElementById('absentTableBody');
+            attendedBody.innerHTML = ''; absentBody.innerHTML = '';
+
+            let attendedList = [];
+            let absentList = [];
+
+            // خوارزمية فلترة الطلاب الذكية
+            for (let phone in allStudents) {
+                const student = allStudents[phone];
+                let isEligible = false;
+
+                // هل الطالب ينتمي لبيئة الامتحان؟
+                if (student.university === selectedExam.university) {
+                    if (student.university === 'baccalaureate' || student.university === 'bachelor') {
+                        if (selectedExam.center === 'all' || selectedExam.center === student.center) {
+                            isEligible = true;
+                        }
+                    } else {
+                        if (student.grade === selectedExam.grade) {
+                            isEligible = true;
+                        }
+                    }
+                }
+
+                if (isEligible) {
+                    // التحقق هل أدى الامتحان أم لا
+                    const studentResults = student.results || {};
+                    const result = studentResults[examId];
+
+                    let studentStageText = uniTranslations[student.university] || student.university;
+                    if(student.university === 'baccalaureate' || student.university === 'bachelor') {
+                        studentStageText += `<span class="student-meta">السنتر: ${student.center}</span>`;
+                    } else {
+                        studentStageText += `<span class="student-meta">الفرقة: ${gradeTranslations[student.grade] || student.grade}</span>`;
+                    }
+
+                    if (result !== undefined) {
+                        attendedList.push({
+                            name: student.name,
+                            phone: phone,
+                            stageHtml: studentStageText,
+                            score: result.score || 0,
+                            total: result.total || maxScore
+                        });
+                    } else {
+                        absentList.push({
+                            name: student.name,
+                            phone: phone,
+                            stageHtml: studentStageText,
+                            parentPhone: student.parentPhone || "غير مسجل"
+                        });
+                    }
+                }
+            }
+
+            // ترتيب الحاضرين بناءً على الدرجة
+            attendedList.sort((a, b) => b.score - a.score);
+
+            // رسم جدول الحاضرين
+            if (attendedList.length === 0) {
+                attendedBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px;">لا يوجد طلاب أدوا هذا الامتحان حتى الآن.</td></tr>';
+            } else {
+                attendedList.forEach((st, index) => {
+                    const percentage = (st.score / st.total) * 100;
+                    const badgeClass = percentage >= 50 ? 'score-pass' : 'score-fail';
+                    const rankIcon = index === 0 ? '🏆' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : '🔹'));
+
+                    attendedBody.innerHTML += `
+                        <tr>
+                            <td><strong style="color: var(--primary); font-size: 18px;">${rankIcon} ${index + 1}</strong></td>
+                            <td><strong>${st.name}</strong></td>
+                            <td style="font-family: monospace; font-size: 16px;">${st.phone}</td>
+                            <td>${st.stageHtml}</td>
+                            <td><span class="score-badge ${badgeClass}">${st.score} / ${st.total} (${percentage.toFixed(1)}%)</span></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // رسم جدول الغائبين
+            if (absentList.length === 0) {
+                absentBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--success); font-weight:bold; padding: 30px;">نسبة الحضور 100%! الجميع أدى الامتحان 🎉</td></tr>';
+            } else {
+                absentList.forEach(st => {
+                    const platformName = localStorage.getItem('platformName') || "المنصة التعليمية";
+                    const msg = `السيد ولي أمر الطالب (${st.name})، يرجى العلم أن نجلكم تخلف عن أداء امتحان (${selectedExam.name}) على ${platformName}. نرجو متابعة الطالب.`;
+                    const waLink = `https://wa.me/2${st.parentPhone}?text=${encodeURIComponent(msg)}`;
+
+                    absentBody.innerHTML += `
+                        <tr>
+                            <td><strong>${st.name}</strong></td>
+                            <td style="font-family: monospace;">${st.phone}</td>
+                            <td>${st.stageHtml}</td>
+                            <td style="font-family: monospace;">${st.parentPhone}</td>
+                            <td class="print-btn-main">
+                                <a href="${waLink}" target="_blank" class="whatsapp-btn">💬 إنذار واتساب</a>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            document.getElementById('reportSection').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
