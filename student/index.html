@@ -222,7 +222,7 @@
             });
         }
 
-        function loadExams() {
+      function loadExams() {
             const availableContainer = document.getElementById('availableExamsContainer');
             const completedContainer = document.getElementById('completedExamsContainer');
             
@@ -241,14 +241,34 @@
                             const exam = exams[examId];
                             let isEligible = false;
 
-                            if (exam.university === currentStudentData.university) {
-                                if (currentStudentData.university === 'bachelor' || currentStudentData.university === 'baccalaureate') {
+                            // 1. توحيد مسمى البكالوريا لمنع خطأ عدم ظهور الامتحان
+                            let studentUni = currentStudentData.university === 'bachelor' ? 'baccalaureate' : currentStudentData.university;
+                            let examUni = exam.university === 'bachelor' ? 'baccalaureate' : exam.university;
+
+                            // 2. الفلترة حسب المرحلة والسنتر
+                            if (examUni === studentUni) {
+                                if (studentUni === 'baccalaureate') {
                                     if (exam.center === currentStudentData.center || exam.center === "all") isEligible = true;
                                 } else {
                                     if (exam.grade === currentStudentData.grade) isEligible = true;
                                 }
                             }
 
+                            // 3. فلترة الأرشيف والمواعيد (عشان الامتحان يظهر في وقته بس)
+                            if (exam.isArchived === true) isEligible = false;
+
+                            if (isEligible && exam.startDate && exam.endDate) {
+                                const now = new Date();
+                                const start = new Date(exam.startDate);
+                                const end = new Date(exam.endDate);
+                                
+                                // لو الوقت لسه مجاش أو خلص، نخفي الامتحان
+                                if (now < start || now > end) {
+                                    isEligible = false; 
+                                }
+                            }
+
+                            // 4. عرض الامتحان لو اجتاز كل الفلاتر
                             if (isEligible) {
                                 if (completedExamIds.includes(examId)) {
                                     hasCompleted = true;
@@ -272,8 +292,8 @@
                                 }
                             }
                         }
-                        if (!hasAvailable) availableContainer.innerHTML = '<p style="color: #64748b; font-weight: 600;">لا توجد امتحانات متاحة لمرحلتك الدراسية حالياً.</p>';
-                        if (!hasCompleted) completedContainer.innerHTML = '<p style="color: #64748b; font-weight: 600;">لم تقم بإنجاز أي امتحانات حتى الآن.</p>';
+                        if (!hasAvailable) availableContainer.innerHTML = '<p style="text-align: right; width: 100%; color: #64748b; font-weight: 600;">لا توجد امتحانات متاحة لمرحلتك الدراسية حالياً أو لم يحن موعدها بعد.</p>';
+                        if (!hasCompleted) completedContainer.innerHTML = '<p style="text-align: right; width: 100%; color: #64748b; font-weight: 600;">لم تقم بإنجاز أي امتحانات حتى الآن.</p>';
                     }
                 });
             });
