@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - المنصة التعليمية</title>
+    <!-- ربط ملف التنسيق الموحد -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    
+    <!-- مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <!-- تطبيق متغيرات الألوان المحفوظة -->
+    <script>
+        const savedColor = localStorage.getItem('primaryColor') || "#4318FF";
+        const savedName = localStorage.getItem('platformName') || "منصة د. أحمد رزق";
+        
+        document.documentElement.style.setProperty('--primary', savedColor);
+        document.title = `تسجيل الدخول - ${savedName}`;
+    </script>
+
+    <div class="container">
+        <h2>🔐 تسجيل الدخول</h2>
+        
+        <form onsubmit="handleLogin(event)">
+            <div>
+                <label>نوع الحساب:</label>
+                <select id="loginType" required>
+                    <option value="student">👨‍🎓 طالب</option>
+                    <option value="parent">👨‍👩‍👦 ولي أمر</option>
+                    <option value="admin">👨‍🏫 إدارة (دكتور / مساعد)</option>
+                </select>
+            </div>
+
+            <div>
+                <label>رقم الهاتف:</label>
+                <input type="tel" id="loginUsername" placeholder="أدخل رقم الهاتف المسجل به الحساب" required autocomplete="off">
+            </div>
+
+            <div>
+                <label id="passwordLabel">الرقم السري:</label>
+                <input type="password" id="loginPassword" placeholder="أدخل الرقم السري" required>
+            </div>
+
+            <div style="text-align: right; margin-bottom: 20px;">
+                <a href="forgot_password.html" style="color: var(--danger); font-size: 14px; font-weight: 700;">هل نسيت كلمة المرور؟</a>
+            </div>
+
+            <button type="submit" id="loginBtn" style="background: var(--primary); box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: 800; cursor: pointer; transition: 0.3s; font-family: 'Cairo';">تسجيل الدخول 🚀</button>
+            
+            <p style="text-align: center; margin-top: 20px; font-weight: 600; font-size: 15px;">
+                ليس لديك حساب؟ <a href="../register.html" style="color: var(--primary);">إنشاء حساب جديد</a>
+            </p>
+        </form>
+    </div>
+
+    <script>
+        // إعدادات فايربيز الخاصة بالمنصة
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform",
+            storageBucket: "dr-ahmed-rizk-platform.appspot.com",
+            messagingSenderId: "117735726313",
+            appId: "1:117735726313:web:2a58aa1c4be7137b53e478"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
+
+        // تغيير النص التوضيحي للرقم السري بناءً على نوع الحساب المختار
+        document.getElementById('loginType').addEventListener('change', function() {
+            const passLabel = document.getElementById('passwordLabel');
+            if (this.value === 'parent') {
+                passLabel.innerText = "رقم هاتف ولي الأمر (بمثابة الرقم السري):";
+            } else {
+                passLabel.innerText = "الرقم السري:";
+            }
+        });
+
+        // دالة الدخول الرئيسية
+        function handleLogin(event) {
+            event.preventDefault(); 
+            const loginBtn = document.getElementById('loginBtn');
+            const originalText = loginBtn.innerText;
+            loginBtn.innerText = "⏳ جاري التحقق...";
+            loginBtn.disabled = true;
+
+            const loginType = document.getElementById('loginType').value;
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            // 1. مسار الإدارة (الدكتور أو المساعدين)
+            if (loginType === "admin") {
+                if (username === "01145114388" && password === "Ahmed987654321") {
+                    window.location.href = "../dashboard/index.html";
+                    return;
+                }
+                
+                database.ref('admins/' + username).once('value').then((snapshot) => {
+                    if (snapshot.exists()) {
+                        const adminPass = snapshot.val();
+                        if (password === adminPass) {
+                            window.location.href = "../dashboard/index.html";
+                        } else {
+                            alert("❌ الرقم السري للمساعد غير صحيح!");
+                            resetBtn();
+                        }
+                    } else {
+                        alert("❌ هذا الرقم غير مسجل في قسم الإدارة!");
+                        resetBtn();
+                    }
+                }).catch((error) => {
+                    alert("❌ حدث خطأ في الاتصال بقاعدة البيانات.");
+                    resetBtn();
+                });
+                return; 
+            }
+
+            // 2. مسار الطالب وولي الأمر
+            database.ref('students/' + username).once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    const studentData = snapshot.val();
+                    
+                    if (loginType === "student") {
+                        if (studentData.password === password) {
+                            // حفظ رقم الهاتف في الجلسة ليتم استخدامه في شاشة الطالب
+                            localStorage.setItem('currentLoggedInStudent', username);
+
+                            // 🚀 التوجيه الموحد: كل الطلاب يذهبون لنفس الشاشة الذكية
+                            window.location.href = "../student/index.html";
+                        } else {
+                            alert("❌ الرقم السري للطالب غير صحيح!");
+                            resetBtn();
+                        }
+                    } 
+                    else if (loginType === "parent") {
+                        if (studentData.parentPhone === password) {
+                            localStorage.setItem('currentLoggedInStudent', username);
+                            alert(`مرحباً بك يا ولي أمر الطالب (${studentData.name}). سيتم تحويلك لصفحة تقارير الدرجات.`);
+                            window.location.href = "../student/result.html";
+                        } else {
+                            alert("❌ بيانات ولي الأمر غير صحيحة! تأكد أن رقم الهاتف بالأعلى هو رقم الطالب، والرقم السري هو رقم ولي الأمر.");
+                            resetBtn();
+                        }
+                    }
+                } else {
+                    alert("❌ رقم الهاتف غير مسجل لدينا في النظام كطالب.");
+                    resetBtn();
+                }
+            }).catch((error) => {
+                alert("❌ حدث خطأ في الاتصال بالخادم.");
+                resetBtn();
+            });
+
+            function resetBtn() {
+                loginBtn.innerText = originalText;
+                loginBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
