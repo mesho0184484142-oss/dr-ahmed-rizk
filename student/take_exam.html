@@ -96,9 +96,9 @@
             border-radius: 8px; font-weight: 800; font-size: 14px; white-space: nowrap; margin-right: 15px;
         }
 
-        /* شبكة الاختيارات */
+        /* شبكة الاختيارات (MCQ/TF) */
         .options-list { display: grid; grid-template-columns: 1fr; gap: 15px; }
-        .options-list.tf-layout { grid-template-columns: 1fr 1fr; } /* توزيع الصح والخطأ */
+        .options-list.tf-layout { grid-template-columns: 1fr 1fr; }
 
         .option-label { 
             display: flex; align-items: center; gap: 15px; background: #fdfdfe; 
@@ -115,6 +115,28 @@
         }
         
         .option-label input[type="radio"] { width: 22px; height: 22px; accent-color: var(--primary); cursor: pointer; pointer-events: none;}
+
+        /* تنسيقات السؤال المقالي */
+        .student-essay-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            background: #fdfdfe;
+            color: var(--dark-text);
+            outline: none;
+            resize: vertical;
+            min-height: 120px;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+        .student-essay-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 24, 255, 0.1);
+        }
 
         .submit-exam-btn { 
             background: var(--success); color: white; border: none; padding: 18px; 
@@ -167,7 +189,7 @@
         let timerInterval;
         let isSubmitting = false;
 
-        // --- نظام المراقبة والحماية من الغش (Anti-Cheat) ---
+        // --- نظام المراقبة والحماية من الغش ---
         document.addEventListener("visibilitychange", () => {
             if (document.hidden && currentExamData && !isSubmitting) {
                 alert("⚠️ تحذير أمني: تم رصد خروجك من نافذة الامتحان! سيتم سحب الورقة وتسليم إجاباتك الحالية فوراً.");
@@ -175,7 +197,6 @@
             }
         });
 
-        // منع استخدام الكليك يمين (Right Click)
         document.addEventListener('contextmenu', event => event.preventDefault());
 
         if (!currentPhone || !examId) {
@@ -213,11 +234,9 @@
 
             questionsList.forEach((q, index) => {
                 const questionText = q.questionText || q.text || "سؤال غير معروف";
-                const qPoints = q.points || 1; // جلب وزن السؤال
+                const qPoints = q.points || 1; 
                 const qType = q.type || 'mcq'; 
-                const optionsLayoutClass = (qType === 'tf') ? 'tf-layout' : '';
                 
-                // استرجاع الإجابة المحفوظة محلياً (Offline Fallback)
                 const savedAnswer = localStorage.getItem(`exam_${examId}_q${index}`);
 
                 htmlContent += `
@@ -226,25 +245,35 @@
                         <h3>${index + 1}. ${questionText}</h3>
                         <span class="q-points-badge">${qPoints} درجات</span>
                     </div>
-                    <div class="options-list ${optionsLayoutClass}">
                 `;
                 
-                const optionsArray = Array.isArray(q.options) ? q.options : Object.values(q.options || {});
+                if (qType === 'mcq' || qType === 'tf') {
+                    const optionsLayoutClass = (qType === 'tf') ? 'tf-layout' : '';
+                    htmlContent += `<div class="options-list ${optionsLayoutClass}">`;
+                    
+                    const optionsArray = Array.isArray(q.options) ? q.options : Object.values(q.options || {});
 
-                optionsArray.forEach((opt, optIndex) => {
-                    // التحقق مما إذا كان هذا الاختيار هو المحفوظ مسبقاً
-                    const isChecked = (savedAnswer !== null && parseInt(savedAnswer) === optIndex);
-                    const selectedClass = isChecked ? 'selected' : '';
+                    optionsArray.forEach((opt, optIndex) => {
+                        const isChecked = (savedAnswer !== null && parseInt(savedAnswer) === optIndex);
+                        const selectedClass = isChecked ? 'selected' : '';
 
+                        htmlContent += `
+                            <label class="option-label ${selectedClass}" onclick="selectOption(this, 'q${index}', ${optIndex})">
+                                <input type="radio" name="q${index}" value="${optIndex}" ${isChecked ? 'checked' : ''}> 
+                                ${opt}
+                            </label>
+                        `;
+                    });
+                    htmlContent += `</div>`;
+                } else if (qType === 'essay') {
+                    // عرض مربع نص للسؤال المقالي
+                    const essayText = savedAnswer !== null ? savedAnswer : '';
                     htmlContent += `
-                        <label class="option-label ${selectedClass}" onclick="selectOption(this, 'q${index}', ${optIndex})">
-                            <input type="radio" name="q${index}" value="${optIndex}" ${isChecked ? 'checked' : ''}> 
-                            ${opt}
-                        </label>
+                        <textarea class="student-essay-input" id="q${index}" oninput="saveEssayAnswer('q${index}', this.value)" placeholder="اكتب إجابتك هنا...">${essayText}</textarea>
                     `;
-                });
+                }
 
-                htmlContent += `</div></div>`;
+                htmlContent += `</div>`;
             });
             
             htmlContent += `<button type="button" class="submit-exam-btn" id="finalSubmitBtn" onclick="submitExam()">📤 تسليم الامتحان النهائي</button>`;
@@ -254,16 +283,18 @@
             form.style.display = 'block';
         }
 
-        // --- دالة اختيار الإجابة مع الحفظ المحلي (Local Storage) ---
+        // حفظ الاختيارات محلياً
         function selectOption(labelElement, radioName, optIndex) {
-            // تحديث الشكل البصري
             const allLabels = labelElement.parentElement.querySelectorAll('.option-label');
             allLabels.forEach(lbl => lbl.classList.remove('selected'));
             labelElement.classList.add('selected');
             labelElement.querySelector('input').checked = true;
-
-            // حفظ الإجابة فوراً في المتصفح
             localStorage.setItem(`exam_${examId}_${radioName}`, optIndex);
+        }
+
+        // حفظ الإجابة المقالية محلياً
+        function saveEssayAnswer(textAreaId, textValue) {
+            localStorage.setItem(`exam_${examId}_${textAreaId}`, textValue);
         }
 
         function startTimer(durationInMinutes) {
@@ -303,51 +334,58 @@
             const questionsList = Array.isArray(currentExamData.questions) ? currentExamData.questions : Object.values(currentExamData.questions || {});
             
             questionsList.forEach((q, index) => {
-                const selectedOption = document.querySelector(`input[name="q${index}"]:checked`);
-                const qPoints = q.points || 1; // وزن السؤال
-                let correctIndex = q.correctAnswerIndex;
+                const qType = q.type || 'mcq';
+                const qPoints = q.points || 1; 
                 
-                // توافق مع البيانات القديمة
-                if(correctIndex === undefined) {
-                    if(q.correct === 'a') correctIndex = 0;
-                    if(q.correct === 'b') correctIndex = 1;
-                    if(q.correct === 'c') correctIndex = 2;
-                    if(q.correct === 'd') correctIndex = 3;
-                }
-
-                if (selectedOption) {
-                    let answerIndex = parseInt(selectedOption.value);
-                    studentAnswersArray.push(answerIndex);
+                if (qType === 'mcq' || qType === 'tf') {
+                    const selectedOption = document.querySelector(`input[name="q${index}"]:checked`);
+                    let correctIndex = q.correctAnswerIndex;
                     
-                    // حساب النقط بناءً على الوزن
-                    if (answerIndex === correctIndex) {
-                        totalEarnedScore += qPoints;
+                    if (selectedOption) {
+                        let answerIndex = parseInt(selectedOption.value);
+                        studentAnswersArray.push(answerIndex);
+                        
+                        if (answerIndex === correctIndex) {
+                            totalEarnedScore += qPoints;
+                        }
+                    } else {
+                        studentAnswersArray.push(null);
                     }
-                } else {
-                    studentAnswersArray.push(null);
+                } else if (qType === 'essay') {
+                    // جلب نص الإجابة المقالية
+                    const essayTextArea = document.getElementById(`q${index}`);
+                    const essayAnswer = essayTextArea ? essayTextArea.value.trim() : "";
+                    studentAnswersArray.push(essayAnswer);
+                    
+                    // لا يتم احتساب درجة المقالي تلقائياً هنا. الدرجة المبدئية 0 حتى يصححها المدرس.
                 }
 
-                // مسح الإجابة من الذاكرة المحلية بعد التسليم الناجح
+                // مسح الإجابة من الذاكرة المحلية
                 localStorage.removeItem(`exam_${examId}_q${index}`);
             });
 
-            // الاعتماد على مجموع درجات الامتحان الفعلي المرفوع، أو حسابه كخيار بديل
             const examTotalScore = currentExamData.totalScore || questionsList.length;
 
             const resultData = {
                 examName: currentExamData.name,
-                score: totalEarnedScore,       // الدرجة المكتسبة (Weighted)
-                total: examTotalScore,         // الدرجة النهائية الكلية
+                score: totalEarnedScore,       // هذه الدرجة للأسئلة الموضوعية فقط (بدون المقالي حالياً)
+                total: examTotalScore,         
                 dateTaken: new Date().toLocaleString('ar-EG'),
-                answers: studentAnswersArray
+                answers: studentAnswersArray,
+                // إذا كان الامتحان يحتوي على مقالي، فنحن نضع علامة أن هذه النتيجة (قيد المراجعة)
+                status: currentExamData.hasEssay ? "pending_review" : "graded"
             };
 
             const updates = {};
             updates[`students/${currentPhone}/results/${examId}`] = resultData;
-            updates[`exams/${examId}/results/${currentPhone}`] = totalEarnedScore;
+            updates[`exams/${examId}/results/${currentPhone}`] = resultData; // حفظ الأوبجكت كله بدلاً من الرقم فقط
 
             database.ref().update(updates).then(() => {
-                alert(`✅ تم تسليم الامتحان بنجاح وحفظ درجاتك في النظام.`);
+                if (currentExamData.hasEssay) {
+                    alert(`✅ تم تسليم الامتحان بنجاح. درجاتك النهائية ستظهر بعد تصحيح الإدارة للأسئلة المقالية.`);
+                } else {
+                    alert(`✅ تم تسليم الامتحان بنجاح وحفظ درجاتك في النظام.`);
+                }
                 window.location.href = "result.html"; 
             }).catch(error => {
                 alert("❌ حدث خطأ أثناء إرسال النتيجة. سيتم إعادة المحاولة...");
