@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>أداء الامتحان - المنصة التعليمية</title>
+    
+    <!-- خطوط جوجل -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --primary: #4318FF;
+            --primary-hover: #3210cc;
+            --secondary: #a3aed1;
+            --success: #05CD99;
+            --danger: #EE5D50;
+            --dark-text: #2b3674;
+            --bg-light: #f4f7fe;
+            --card-bg: #ffffff;
+            --border-color: #e0e5f2;
+            --warning: #ffce20;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+
+        body { 
+            background-color: var(--bg-light); 
+            color: var(--dark-text); 
+            padding-bottom: 80px; 
+            user-select: none; /* منع التحديد والنسخ */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        /* =========================================
+           شريط الامتحان الثابت (Sticky Header)
+           ========================================= */
+        .exam-header { 
+            background: var(--card-bg); 
+            padding: 15px 5%; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+            border-bottom: 4px solid var(--primary); 
+            transition: 0.3s;
+        }
+        
+        .exam-title { 
+            font-size: 1.2rem; 
+            font-weight: 900; 
+            color: var(--primary); 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+        
+        .exam-timer { 
+            background: rgba(238, 93, 80, 0.1); 
+            color: var(--danger); 
+            padding: 10px 20px; 
+            border-radius: 12px; 
+            font-weight: 900; 
+            font-size: 1.1rem; 
+            border: 2px solid var(--danger);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            direction: ltr; /* لجعل الدقائق والثواني تظهر بشكل صحيح */
+        }
+        
+        .exam-timer.danger { 
+            background: var(--danger); 
+            color: #ffffff; 
+            animation: pulse 1s infinite; 
+            box-shadow: 0 0 15px rgba(238, 93, 80, 0.5);
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* =========================================
+           محتوى الامتحان
+           ========================================= */
+        .exam-container { 
+            max-width: 900px; 
+            margin: 40px auto; 
+            padding: 0 20px; 
+        }
+        
+        .loader { 
+            text-align: center; 
+            margin-top: 100px; 
+            font-size: 1.4rem; 
+            font-weight: 800; 
+            color: var(--primary); 
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        }
+
+        /* تصميم كارت السؤال */
+        .question-box { 
+            background: var(--card-bg); 
+            padding: 35px; 
+            border-radius: 24px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); 
+            margin-bottom: 30px; 
+            border: 2px solid var(--border-color); 
+            transition: all 0.3s ease;
+        }
+        .question-box:hover { border-color: var(--primary); box-shadow: 0 15px 40px rgba(67, 24, 255, 0.08); }
+
+        .q-header-row {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            border-bottom: 2px dashed var(--bg-light); padding-bottom: 20px; margin-bottom: 25px; gap: 15px;
+        }
+
+        .question-box h3 { margin: 0; color: var(--dark-text); line-height: 1.8; font-size: 1.25rem; font-weight: 800; flex: 1; }
+        
+        .q-points-badge {
+            background: rgba(67, 24, 255, 0.05); color: var(--primary); padding: 6px 15px;
+            border-radius: 10px; font-weight: 900; font-size: 0.95rem; white-space: nowrap;
+        }
+
+        /* شبكة الاختيارات */
+        .options-list { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .options-list.tf-layout { grid-template-columns: 1fr 1fr; } /* توزيع الصح والخطأ */
+
+        .option-label { 
+            display: flex; align-items: center; gap: 15px; background: #fdfdfe; 
+            padding: 18px 25px; border-radius: 16px; cursor: pointer; 
+            border: 2px solid var(--border-color); font-weight: 700; font-size: 1.05rem; 
+            transition: all 0.2s ease; color: var(--dark-text);
+        }
+        .option-label:hover { background: var(--bg-light); border-color: var(--secondary); }
+        
+        .option-label.selected {
+            background: rgba(67, 24, 255, 0.05);
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 5px 15px rgba(67, 24, 255, 0.1);
+        }
+        
+        /* تكبير دائرة الاختيار لتناسب الموبايل */
+        .option-label input[type="radio"] { 
+            width: 24px; height: 24px; accent-color: var(--primary); 
+            cursor: pointer; pointer-events: none; margin: 0;
+        }
+
+        /* حقل الإجابة المقالية (إن وجد) */
+        .essay-textarea {
+            width: 100%; padding: 20px; border: 2px solid var(--border-color);
+            border-radius: 16px; font-family: 'Cairo'; font-size: 1.05rem;
+            font-weight: 600; color: var(--dark-text); background: #fcfcfc;
+            resize: vertical; min-height: 120px; outline: none; transition: 0.3s;
+        }
+        .essay-textarea:focus { border-color: var(--primary); background: var(--card-bg); box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1); }
+
+        /* زر التسليم */
+        .submit-exam-btn { 
+            background: var(--success); color: white; border: none; padding: 20px; 
+            border-radius: 18px; font-weight: 900; cursor: pointer; width: 100%; 
+            font-size: 1.3rem; margin-top: 30px; transition: 0.3s; font-family: 'Cairo'; 
+            box-shadow: 0 10px 25px rgba(5, 205, 153, 0.25); display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .submit-exam-btn:hover:not(:disabled) { background: #04b082; transform: translateY(-4px); box-shadow: 0 15px 30px rgba(5, 205, 153, 0.35); }
+        .submit-exam-btn:disabled { background: var(--secondary); cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* استجابة الموبايل */
+        @media (max-width: 768px) {
+            .exam-header { flex-direction: column; gap: 15px; text-align: center; padding: 15px 20px;}
+            .exam-timer { width: 100%; justify-content: center; }
+            .question-box { padding: 25px 20px; }
+            .options-list.tf-layout { grid-template-columns: 1fr; }
+            .q-header-row { flex-direction: column; gap: 10px; }
+            .q-points-badge { align-self: flex-start; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        const savedColor = localStorage.getItem('primaryColor') || "#4318FF";
+        document.documentElement.style.setProperty('--primary', savedColor);
+    </script>
+
+    <!-- شريط الامتحان العلوي -->
+    <div class="exam-header">
+        <div class="exam-title" id="displayExamName">📝 جاري تحميل الامتحان...</div>
+        <div class="exam-timer" id="timerDisplay"><span>⏳ الوقت:</span> <span>--:--</span></div>
+    </div>
+
+    <!-- حاوية الأسئلة -->
+    <div class="exam-container">
+        <div id="loader" class="loader">⏳ جاري تجهيز الأسئلة وتأمين الاتصال بالخادم...</div>
+        <form id="examForm" style="display: none;"></form>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const currentPhone = localStorage.getItem('currentLoggedInStudent');
+        const urlParams = new URLSearchParams(window.location.search);
+        const examId = urlParams.get('id');
+
+        let currentExamData = null;
+        let timerInterval;
+        let isSubmitting = false;
+
+        // --- نظام المراقبة والحماية من الغش (Anti-Cheat) ---
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden && currentExamData && !isSubmitting) {
+                alert("⚠️ تحذير أمني: تم رصد خروجك من نافذة الامتحان!\nسيتم سحب الورقة وتسليم إجاباتك الحالية فوراً.");
+                submitExam();
+            }
+        });
+
+        // منع استخدام الكليك يمين والنسخ (Right Click)
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        if (!currentPhone || !examId) {
+            window.location.href = "index.html";
+        } else {
+            database.ref(`students/${currentPhone}/results/${examId}`).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    alert("❌ لا يمكن الدخول.. لقد قمت بأداء وتسليم هذا الامتحان مسبقاً.");
+                    window.location.href = "index.html";
+                } else {
+                    fetchExamData();
+                }
+            });
+        }
+
+        function fetchExamData() {
+            database.ref('exams/' + examId).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    currentExamData = snapshot.val();
+                    document.getElementById('displayExamName').innerText = `📝 ${currentExamData.name}`;
+                    renderQuestions(currentExamData.questions);
+                    startTimer(currentExamData.duration);
+                } else {
+                    alert("⚠️ هذا الامتحان لم يعد متاحاً أو تم حذفه من قبل الإدارة.");
+                    window.location.href = "index.html";
+                }
+            });
+        }
+
+        function renderQuestions(questions) {
+            const form = document.getElementById('examForm');
+            let htmlContent = '';
+            
+            const questionsList = Array.isArray(questions) ? questions : Object.values(questions || {});
+
+            questionsList.forEach((q, index) => {
+                const questionText = q.questionText || q.text || "سؤال غير محدد";
+                const qPoints = q.points || 1; 
+                const qType = q.type || 'mcq'; 
+                
+                // استرجاع الإجابة المحفوظة محلياً تحسباً لانقطاع الإنترنت
+                const savedAnswer = localStorage.getItem(`exam_${examId}_q${index}`);
+
+                htmlContent += `
+                <div class="question-box">
+                    <div class="q-header-row">
+                        <h3>${index + 1}. ${questionText}</h3>
+                        <span class="q-points-badge">${qPoints} ${qPoints <= 10 && qPoints >= 3 ? 'درجات' : 'درجة'}</span>
+                    </div>
+                `;
+
+                if (qType === 'mcq' || qType === 'tf') {
+                    const optionsLayoutClass = (qType === 'tf') ? 'tf-layout' : '';
+                    htmlContent += `<div class="options-list ${optionsLayoutClass}">`;
+                    
+                    const optionsArray = Array.isArray(q.options) ? q.options : Object.values(q.options || {});
+
+                    optionsArray.forEach((opt, optIndex) => {
+                        const isChecked = (savedAnswer !== null && parseInt(savedAnswer) === optIndex);
+                        const selectedClass = isChecked ? 'selected' : '';
+
+                        htmlContent += `
+                            <label class="option-label ${selectedClass}" onclick="selectOption(this, 'q${index}', ${optIndex})">
+                                <input type="radio" name="q${index}" value="${optIndex}" ${isChecked ? 'checked' : ''}> 
+                                ${opt}
+                            </label>
+                        `;
+                    });
+                    htmlContent += `</div>`;
+                } else if (qType === 'essay') {
+                    htmlContent += `
+                        <textarea class="essay-textarea" id="essay_q${index}" placeholder="اكتب إجابتك المقالية بالتفصيل هنا..." oninput="saveEssayAnswer('q${index}', this.value)">${savedAnswer || ''}</textarea>
+                    `;
+                }
+
+                htmlContent += `</div>`;
+            });
+            
+            htmlContent += `<button type="button" class="submit-exam-btn" id="finalSubmitBtn" onclick="submitExam()">📤 تسليم وإنهاء الامتحان</button>`;
+            
+            form.innerHTML = htmlContent;
+            document.getElementById('loader').style.display = 'none';
+            form.style.display = 'block';
+        }
+
+        // --- دالة اختيار الإجابة وحفظها محلياً ---
+        function selectOption(labelElement, radioName, optIndex) {
+            const allLabels = labelElement.parentElement.querySelectorAll('.option-label');
+            allLabels.forEach(lbl => lbl.classList.remove('selected'));
+            labelElement.classList.add('selected');
+            labelElement.querySelector('input').checked = true;
+
+            localStorage.setItem(`exam_${examId}_${radioName}`, optIndex);
+        }
+
+        // --- دالة حفظ الإجابة المقالية ---
+        function saveEssayAnswer(qName, value) {
+            localStorage.setItem(`exam_${examId}_${qName}`, value);
+        }
+
+        // --- نظام المؤقت (Timer) ---
+        function startTimer(durationInMinutes) {
+            let timeInSeconds = durationInMinutes * 60;
+            const timerDisplay = document.getElementById('timerDisplay');
+
+            timerInterval = setInterval(() => {
+                timeInSeconds--;
+                const minutes = Math.floor(timeInSeconds / 60);
+                const seconds = timeInSeconds % 60;
+                
+                // تنسيق الوقت
+                const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+                const formattedSeconds = seconds < 10 ? '0' + seconds : seconds;
+                
+                timerDisplay.innerHTML = `<span>⏳ الوقت:</span> <span>${formattedMinutes}:${formattedSeconds}</span>`;
+
+                if (timeInSeconds <= 180 && !timerDisplay.classList.contains('danger')) {
+                    timerDisplay.classList.add('danger');
+                }
+                if (timeInSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    alert("⏳ انتهى الوقت المخصص للامتحان!\nسيتم تشفير البيانات وتسليم إجاباتك الحالية تلقائياً.");
+                    submitExam();
+                }
+            }, 1000);
+        }
+
+        // --- تسليم الامتحان ---
+        function submitExam() {
+            if (isSubmitting) return; 
+            isSubmitting = true;
+            clearInterval(timerInterval); 
+            
+            const submitBtn = document.getElementById('finalSubmitBtn');
+            if(submitBtn) {
+                submitBtn.innerText = "⏳ جاري التشفير والتسليم الآمن...";
+                submitBtn.disabled = true;
+            }
+            
+            let totalEarnedScore = 0;
+            let studentAnswersArray = []; 
+            let needsManualReview = false;
+
+            const questionsList = Array.isArray(currentExamData.questions) ? currentExamData.questions : Object.values(currentExamData.questions || {});
+            
+            questionsList.forEach((q, index) => {
+                const qPoints = q.points || 1;
+                
+                if (q.type === 'mcq' || q.type === 'tf') {
+                    const selectedOption = document.querySelector(`input[name="q${index}"]:checked`);
+                    let correctIndex = q.correctAnswerIndex;
+                    
+                    if(correctIndex === undefined) {
+                        if(q.correct === 'a') correctIndex = 0;
+                        if(q.correct === 'b') correctIndex = 1;
+                        if(q.correct === 'c') correctIndex = 2;
+                        if(q.correct === 'd') correctIndex = 3;
+                    }
+
+                    if (selectedOption) {
+                        let answerIndex = parseInt(selectedOption.value);
+                        studentAnswersArray.push(answerIndex);
+                        if (answerIndex === correctIndex) { totalEarnedScore += qPoints; }
+                    } else {
+                        studentAnswersArray.push(null);
+                    }
+                } else if (q.type === 'essay') {
+                    needsManualReview = true;
+                    const essayText = document.getElementById(`essay_q${index}`).value.trim();
+                    studentAnswersArray.push(essayText !== "" ? essayText : null);
+                }
+
+                localStorage.removeItem(`exam_${examId}_q${index}`);
+            });
+
+            const examTotalScore = currentExamData.totalScore || questionsList.length;
+
+            const resultData = {
+                examName: currentExamData.name,
+                score: totalEarnedScore, 
+                total: examTotalScore, 
+                dateTaken: new Date().toLocaleString('ar-EG'),
+                answers: studentAnswersArray,
+                status: needsManualReview ? "pending_review" : "graded"
+            };
+
+            const updates = {};
+            updates[`students/${currentPhone}/results/${examId}`] = resultData;
+            updates[`exams/${examId}/results/${currentPhone}`] = totalEarnedScore;
+
+            database.ref().update(updates).then(() => {
+                alert(`✅ تم تسليم الامتحان بنجاح وحفظ بياناتك في الخادم.`);
+                window.location.href = "result.html"; 
+            }).catch(error => {
+                alert("❌ حدث خطأ أثناء إرسال النتيجة للأسف.\nتأكد من اتصالك بالإنترنت وسيتم إعادة المحاولة...");
+                isSubmitting = false;
+                if(submitBtn) {
+                    submitBtn.innerText = "📤 إعادة تسليم الامتحان";
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

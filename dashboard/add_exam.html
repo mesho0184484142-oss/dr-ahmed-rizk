@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>رفع امتحان جديد - المنصة التعليمية</title>
+    
+    <!-- خطوط جوجل -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --card-bg: #ffffff;
+            --bg-light: #f4f7fe;
+            --border-color: #e0e5f2;
+            --primary: #4318FF;
+            --primary-hover: #3311cc;
+            --secondary: #a3aed1;
+            --success: #05CD99;
+            --danger: #EE5D50;
+            --dark-text: #2b3674;
+            --warning: #ffce20;
+            --sidebar-width: 280px;
+        }
+
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background-color: var(--bg-light); 
+            color: var(--dark-text);
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* هيكل لوحة التحكم المتجاوب */
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--card-bg);
+            border-left: 1px solid var(--border-color);
+            padding: 20px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar h3 {
+            color: var(--primary);
+            font-weight: 800;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar ul li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar ul li a {
+            display: block;
+            padding: 12px 15px;
+            text-decoration: none;
+            color: var(--dark-text);
+            font-weight: 600;
+            border-radius: 12px;
+            transition: 0.3s;
+        }
+
+        .sidebar ul li a:hover, .sidebar ul li a.active {
+            background: var(--bg-light);
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-right: var(--sidebar-width); /* لإزاحة المحتوى بمقدار القائمة */
+            padding: 30px 40px;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 30px;
+            color: var(--dark-text);
+        }
+
+        /* تنسيقات النموذج */
+        .form-container { 
+            background: var(--card-bg); 
+            padding: 35px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.02); 
+            margin-bottom: 30px; 
+            border: 1px solid var(--border-color);
+        }
+
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; margin-bottom: 10px; font-weight: 700; font-size: 1rem; }
+        .form-group input, .form-group select { 
+            width: 100%; padding: 16px; border: 2px solid var(--border-color); 
+            border-radius: 14px; font-family: 'Cairo'; font-size: 1rem; 
+            background: #fcfcfc; transition: 0.3s; box-sizing: border-box;
+            color: var(--dark-text); font-weight: 600;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: var(--primary); outline: none; background: var(--card-bg); }
+
+        .dynamic-field { display: none; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .dates-box { 
+            background: rgba(67, 24, 255, 0.03); padding: 25px; 
+            border-radius: 16px; border: 1px dashed var(--primary); 
+            margin-bottom: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; 
+        }
+
+        /* ترويسة محرك الأسئلة */
+        .questions-header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 2px solid var(--bg-light); padding-bottom: 20px; 
+            margin-bottom: 30px; margin-top: 40px; flex-wrap: wrap; gap: 15px;
+        }
+        
+        .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-add {
+            border: none; padding: 12px 20px; border-radius: 12px; font-weight: 700; 
+            cursor: pointer; transition: 0.3s; font-family: 'Cairo'; font-size: 0.95rem;
+        }
+        .btn-add-mcq { background: var(--primary); color: white; }
+        .btn-add-tf { background: var(--secondary); color: white; }
+        .btn-add-essay { background: var(--warning); color: var(--dark-text); }
+        
+        .btn-add:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+
+        /* كارت السؤال */
+        .question-card { 
+            background: #fdfdfe; border: 2px solid var(--border-color); padding: 30px; 
+            border-radius: 16px; margin-bottom: 25px; transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.01);
+        }
+        .question-card:hover { border-color: var(--primary); box-shadow: 0 8px 25px rgba(67, 24, 255, 0.08); }
+
+        .question-header-row { 
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; 
+            margin-bottom: 25px; flex-wrap: wrap; gap: 15px;
+        }
+        
+        .q-title { font-size: 1.2rem; font-weight: 800; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 10px; }
+        .q-badge { background: var(--bg-light); color: var(--dark-text); font-size: 0.85rem; padding: 5px 12px; border-radius: 8px; font-weight: 700;}
+        
+        .q-controls { display: flex; align-items: center; gap: 15px; }
+        .q-score-wrapper { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 0.95rem; }
+        .q-score-input { width: 70px; padding: 10px; border: 2px solid var(--border-color); border-radius: 10px; text-align: center; font-weight: bold; color: var(--primary); font-family: 'Cairo';}
+        
+        .delete-q-btn { background: rgba(238, 93, 80, 0.1); color: var(--danger); border: none; padding: 10px 15px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; font-family: 'Cairo';}
+        .delete-q-btn:hover { background: var(--danger); color: white; }
+
+        .q-text-input { width: 100%; padding: 18px; border: 2px solid var(--border-color); border-radius: 14px; margin-bottom: 25px; font-family: 'Cairo'; font-weight: 700; font-size: 1.05rem; outline: none; box-sizing: border-box; background: #fcfcfc;}
+        .q-text-input:focus { border-color: var(--primary); background: var(--card-bg);}
+
+        /* شبكة الخيارات */
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .options-grid.tf-grid { grid-template-columns: 1fr 1fr; }
+
+        .option-item { 
+            display: flex; align-items: center; gap: 15px; background: var(--bg-light); 
+            padding: 15px 20px; border-radius: 14px; border: 2px solid transparent; transition: 0.3s;
+        }
+        .option-item.correct-selected { border-color: var(--success); background: #f4fff9; }
+
+        .option-item input[type="radio"] { width: 24px; height: 24px; accent-color: var(--success); cursor: pointer; }
+        .option-item input[type="text"] { flex: 1; border: none; outline: none; background: transparent; font-family: 'Cairo'; font-weight: 700; font-size: 1rem; color: var(--dark-text); }
+        .option-item input[type="text"]:read-only { color: var(--primary); font-weight: 800; cursor: default; }
+
+        /* تنسيقات السؤال المقالي */
+        .essay-notice { background: rgba(255, 206, 32, 0.15); color: var(--dark-text); padding: 15px; border-radius: 12px; font-weight: 700; border: 1px dashed var(--warning); margin-bottom: 15px; font-size: 0.95rem;}
+        .q-model-answer { width: 100%; padding: 18px; border: 2px solid var(--border-color); border-radius: 14px; font-family: 'Cairo'; font-weight: 600; font-size: 1rem; outline: none; resize: vertical; box-sizing: border-box; background: #fcfcfc;}
+        .q-model-answer:focus { border-color: var(--primary); background: var(--card-bg);}
+
+        .submit-btn { width: 100%; background: var(--success); color: white; font-size: 1.2rem; font-weight: 800; padding: 20px; border: none; border-radius: 16px; cursor: pointer; transition: 0.3s; margin-top: 30px; font-family: 'Cairo'; box-shadow: 0 8px 20px rgba(5, 205, 153, 0.2);}
+        .submit-btn:hover:not(:disabled) { background: #04b082; transform: translateY(-3px); box-shadow: 0 12px 25px rgba(5, 205, 153, 0.3); }
+        .submit-btn:disabled { background: var(--secondary); cursor: not-allowed; box-shadow: none; }
+
+        /* التجاوب مع شاشات الموبايل */
+        @media (max-width: 992px) {
+            .dashboard-layout { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: relative; border-left: none; border-bottom: 1px solid var(--border-color); padding: 15px; }
+            .sidebar ul { display: flex; overflow-x: auto; white-space: nowrap; gap: 10px; padding-bottom: 10px;}
+            .sidebar ul li { margin-bottom: 0; }
+            .main-content { margin-right: 0; padding: 20px; }
+            .options-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .dates-box { grid-template-columns: 1fr; gap: 15px; }
+            .questions-header { flex-direction: column; align-items: stretch; }
+            .action-buttons { flex-direction: column; }
+            .btn-add { width: 100%; }
+            .question-header-row { flex-direction: column; align-items: flex-start; }
+            .q-controls { width: 100%; justify-content: space-between; margin-top: 15px; }
+            .form-container { padding: 20px; }
+            .question-card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        const savedColor = localStorage.getItem('primaryColor') || "#4318FF";
+        document.documentElement.style.setProperty('--primary', savedColor);
+    </script>
+
+    <div class="dashboard-layout">
+        <!-- القائمة الجانبية -->
+        <aside class="sidebar">
+            <h3>👨‍🏫 لوحة الإدارة</h3>
+            <ul>
+                <li><a href="index.html">🏠 الرئيسية للإحصائيات</a></li>
+                <li><a href="add_exam.html" class="active">📝 بناء امتحان جديد</a></li>
+                <li><a href="manage_exams.html">📂 إدارة الامتحانات</a></li>
+                <li><a href="mark_exams.html">✍️ تصحيح المقالي </a></li>
+                <li><a href="center_report.html">📊 تقارير الدرجات</a></li>
+                <li><a href="manage_students.html">👥 إدارة الطلاب</a></li>
+                <li><a href="settings.html">⚙️ إعدادات المنصة</a></li>
+                <li><a href="../auth/login.html" style="color: var(--danger);">🚪 خروج</a></li>
+            </ul>
+        </aside>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content">
+            <h2 class="page-title">📝 بناء ورفع امتحان جديد</h2>
+            
+            <div class="form-container">
+                <!-- 1. إعدادات الامتحان والتوجيه -->
+                <div class="form-group">
+                    <label>اسم الامتحان:</label>
+                    <input type="text" id="examName" placeholder="مثال: امتحان شامل الباب الأول" required>
+                </div>
+
+                <div class="form-group">
+                    <label>تخصيص الامتحان للمرحلة:</label>
+                    <select id="examUniversity" required onchange="handleTargetChange()">
+                        <option value="" disabled selected>-- اختر الجامعة أو المرحلة --</option>
+                        <option value="damanhour_uni">جامعة دمنهور</option>
+                        <option value="alex_uni">جامعة الإسكندرية</option>
+                        <option value="baccalaureate">بكالوريا</option>
+                    </select>
+                </div>
+
+                <div class="form-group dynamic-field" id="gradeWrapper">
+                    <label>الفرقة الدراسية المستهدفة:</label>
+                    <select id="examGrade">
+                        <option value="year_1">الفرقة الأولى</option>
+                        <option value="year_2">الفرقة الثانية</option>
+                        <option value="year_3">الفرقة الثالثة</option>
+                        <option value="year_4">الفرقة الرابعة</option>
+                    </select>
+                </div>
+
+                <div class="form-group dynamic-field" id="centerWrapper">
+                    <label>السنتر المستهدف (بكالوريا):</label>
+                    <select id="examCenter">
+                        <option value="all" selected>كل السناتر (عام)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>وقت الامتحان (بالدقائق):</label>
+                    <input type="number" id="examDuration" min="5" placeholder="مثال: 60" required>
+                </div>
+
+                <div class="dates-box">
+                    <div class="form-group" style="margin: 0;">
+                        <label style="color: var(--primary);">📅 يفتح للطلاب في (اختياري):</label>
+                        <input type="datetime-local" id="examStartDate">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label style="color: var(--danger);">⏳ يُغلق أوتوماتيكياً في (اختياري):</label>
+                        <input type="datetime-local" id="examEndDate">
+                    </div>
+                </div>
+
+                <!-- 2. محرك بناء الأسئلة -->
+                <div class="questions-header">
+                    <h3 style="margin: 0; color: var(--dark-text); font-size: 1.4rem;">🧩 هيكلة الأسئلة</h3>
+                    <div class="action-buttons">
+                        <button type="button" class="btn-add btn-add-mcq" onclick="addQuestion('mcq')">➕ سؤال اختياري</button>
+                        <button type="button" class="btn-add btn-add-tf" onclick="addQuestion('tf')">➕ سؤال صح/خطأ</button>
+                        <button type="button" class="btn-add btn-add-essay" onclick="addQuestion('essay')">✍️ سؤال مقالي</button>
+                    </div>
+                </div>
+
+                <div id="questionsContainer"></div>
+
+                <button type="button" class="submit-btn" id="publishBtn" onclick="publishExam()">🚀 اعتماد ونشر الامتحان</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // إعدادات فايربيز
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // التحكم في الحقول الديناميكية
+        function handleTargetChange() {
+            const uni = document.getElementById('examUniversity').value;
+            const gradeWrapper = document.getElementById('gradeWrapper');
+            const centerWrapper = document.getElementById('centerWrapper');
+
+            if (uni === 'alex_uni' || uni === 'damanhour_uni') {
+                gradeWrapper.style.display = 'block';
+                centerWrapper.style.display = 'none';
+            } else if (uni === 'baccalaureate' || uni === 'bachelor') {
+                gradeWrapper.style.display = 'none';
+                centerWrapper.style.display = 'block';
+            }
+        }
+
+        // جلب السناتر من الداتا بيز
+        database.ref('centers').once('value').then(snapshot => {
+            if (snapshot.exists()) {
+                const centerSelect = document.getElementById('examCenter');
+                const centers = snapshot.val();
+                const centersArray = Array.isArray(centers) ? centers : Object.values(centers);
+                centersArray.forEach(c => { centerSelect.innerHTML += `<option value="${c}">${c}</option>`; });
+            }
+        });
+
+        // محرك الأسئلة
+        let questionCounter = 0;
+
+        function addQuestion(type) {
+            questionCounter++;
+            const container = document.getElementById('questionsContainer');
+            
+            let optionsHTML = '';
+            let badgeText = '';
+
+            if (type === 'mcq') {
+                badgeText = 'اختيار من متعدد';
+                optionsHTML = `
+                    <p style="margin: 0 0 15px 0; font-size: 0.9rem; font-weight: 600; color: var(--secondary);">حدد الإجابة الصحيحة بالنقر على الدائرة المجاورة لها:</p>
+                    <div class="options-grid">
+                        ${[0, 1, 2, 3].map(i => `
+                        <div class="option-item" id="opt-wrap-${questionCounter}-${i}">
+                            <input type="radio" name="correct-${questionCounter}" value="${i}" ${i===0?'checked':''} onchange="highlightCorrect(this, ${questionCounter})">
+                            <input type="text" class="q-opt" placeholder="الاختيار رقم ${i+1}" required>
+                        </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (type === 'tf') {
+                badgeText = 'صح أو خطأ';
+                optionsHTML = `
+                    <p style="margin: 0 0 15px 0; font-size: 0.9rem; font-weight: 600; color: var(--secondary);">حدد الإجابة الصحيحة بالنقر على الدائرة المجاورة لها:</p>
+                    <div class="options-grid tf-grid">
+                        <div class="option-item" id="opt-wrap-${questionCounter}-0">
+                            <input type="radio" name="correct-${questionCounter}" value="0" checked onchange="highlightCorrect(this, ${questionCounter})">
+                            <input type="text" class="q-opt" value="صح" readonly>
+                        </div>
+                        <div class="option-item" id="opt-wrap-${questionCounter}-1">
+                            <input type="radio" name="correct-${questionCounter}" value="1" onchange="highlightCorrect(this, ${questionCounter})">
+                            <input type="text" class="q-opt" value="خطأ" readonly>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'essay') {
+                badgeText = 'سؤال مقالي (يصحح يدوياً)';
+                optionsHTML = `
+                    <div class="essay-notice">⚠️ سيظهر للطالب مربع نصي لكتابة الإجابة، وستقوم الإدارة بتصحيحها لاحقاً.</div>
+                    <textarea class="q-model-answer" placeholder="اكتب الإجابة النموذجية كمرجع لك أثناء التصحيح (اختياري)..." rows="4"></textarea>
+                `;
+            }
+
+            const qCard = document.createElement('div');
+            qCard.className = 'question-card';
+            qCard.id = `q-card-${questionCounter}`;
+            qCard.setAttribute('data-qtype', type);
+            
+            qCard.innerHTML = `
+                <div class="question-header-row">
+                    <h4 class="q-title">
+                        <span>سؤال <span class="q-num"></span></span>
+                        <span class="q-badge">${badgeText}</span>
+                    </h4>
+                    <div class="q-controls">
+                        <div class="q-score-wrapper">
+                            الدرجة: <input type="number" class="q-score-input" value="1" min="1" max="100">
+                        </div>
+                        <button type="button" class="delete-q-btn" onclick="removeQuestion(${questionCounter})">🗑️ مسح</button>
+                    </div>
+                </div>
+                <input type="text" class="q-text-input q-text" placeholder="اكتب نص السؤال بوضوح هنا..." required>
+                ${optionsHTML}
+            `;
+            
+            container.appendChild(qCard);
+            updateQuestionNumbers();
+            
+            if (type !== 'essay') {
+                highlightCorrect(qCard.querySelector('input[type="radio"]:checked'), questionCounter);
+            }
+        }
+
+        function highlightCorrect(radioBtn, qId) {
+            if(!radioBtn) return;
+            const wrappers = document.querySelectorAll(`#q-card-${qId} .option-item`);
+            wrappers.forEach(w => w.classList.remove('correct-selected'));
+            radioBtn.closest('.option-item').classList.add('correct-selected');
+        }
+
+        function removeQuestion(id) {
+            const card = document.getElementById(`q-card-${id}`);
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.95)';
+                setTimeout(() => { card.remove(); updateQuestionNumbers(); }, 300);
+            }
+        }
+
+        function updateQuestionNumbers() {
+            document.querySelectorAll('.question-card').forEach((card, index) => {
+                card.querySelector('.q-num').innerText = index + 1;
+            });
+        }
+
+        // إضافة سؤال افتراضي عند فتح الصفحة
+        window.onload = () => { addQuestion('mcq'); };
+
+        // حفظ ونشر الامتحان
+        function publishExam() {
+            const publishBtn = document.getElementById('publishBtn');
+            const name = document.getElementById('examName').value.trim();
+            const uni = document.getElementById('examUniversity').value;
+            const duration = document.getElementById('examDuration').value;
+            const startDate = document.getElementById('examStartDate').value;
+            const endDate = document.getElementById('examEndDate').value;
+
+            if (!name || !uni || !duration) return alert('⚠️ يرجى إكمال بيانات الامتحان الأساسية.');
+
+            if (startDate && endDate) {
+                if(new Date(startDate) >= new Date(endDate)) {
+                    return alert("❌ خطأ: تاريخ إغلاق الامتحان يجب أن يكون بعد تاريخ الفتح!");
+                }
+            }
+
+            let grade = "none";
+            let center = "none";
+
+            if (uni === 'baccalaureate' || uni === 'bachelor') {
+                center = document.getElementById('examCenter').value;
+            } else {
+                grade = document.getElementById('examGrade').value;
+            }
+
+            const qCards = document.querySelectorAll('.question-card');
+            if (qCards.length === 0) return alert('⚠️ لا يمكن نشر امتحان فارغ.');
+
+            let questionsList = [];
+            let isValid = true;
+            let totalExamScore = 0;
+            let hasEssay = false;
+
+            qCards.forEach((card) => {
+                const text = card.querySelector('.q-text').value.trim();
+                const score = parseInt(card.querySelector('.q-score-input').value) || 1;
+                const qType = card.getAttribute('data-qtype');
+                
+                if (!text) isValid = false;
+
+                if (qType === 'mcq' || qType === 'tf') {
+                    const optsInputs = Array.from(card.querySelectorAll('.q-opt'));
+                    const opts = optsInputs.map(opt => opt.value.trim());
+                    const correctRadio = card.querySelector('input[type="radio"]:checked');
+                    
+                    if (opts.some(o => o === "")) isValid = false;
+
+                    questionsList.push({
+                        type: qType,
+                        questionText: text,
+                        options: opts,
+                        correctAnswerIndex: parseInt(correctRadio.value),
+                        points: score
+                    });
+                } else if (qType === 'essay') {
+                    hasEssay = true;
+                    const modelAnswer = card.querySelector('.q-model-answer').value.trim();
+                    
+                    questionsList.push({
+                        type: 'essay',
+                        questionText: text,
+                        modelAnswer: modelAnswer,
+                        points: score
+                    });
+                }
+
+                totalExamScore += score; 
+            });
+
+            if (!isValid) return alert('⚠️ هناك نصوص أسئلة أو اختيارات فارغة. يرجى مراجعتها.');
+
+            publishBtn.innerText = "⏳ جاري الرفع...";
+            publishBtn.disabled = true;
+
+            const newExamRef = database.ref('exams').push();
+            
+            const examData = {
+                id: newExamRef.key,
+                name: name,
+                university: uni,
+                grade: grade,
+                center: center,
+                duration: parseInt(duration),
+                startDate: startDate || "",
+                endDate: endDate || "",
+                isArchived: false,
+                hasEssay: hasEssay,
+                questions: questionsList,
+                totalQuestions: questionsList.length,
+                totalScore: totalExamScore, 
+                publishDate: new Date().toISOString(),
+                status: "active" 
+            };
+
+            newExamRef.set(examData).then(() => {
+                alert(`🎉 تم نشر الامتحان للطلاب بنجاح!\nإجمالي الدرجات: ${totalExamScore} درجة.`);
+                // يمكنك تفعيل التحويل للصفحة الأخرى بإزالة التعليق أدناه
+                // window.location.href = 'manage_exams.html'; 
+                publishBtn.innerText = "🚀 اعتماد ونشر الامتحان";
+                publishBtn.disabled = false;
+            }).catch(error => {
+                alert('❌ حدث خطأ أثناء الاتصال بالقاعدة.');
+                publishBtn.innerText = "🚀 اعتماد ونشر الامتحان";
+                publishBtn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>

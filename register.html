@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب جديد - المنصة</title>
+    
+    <!-- خطوط جوجل (Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- ربط ملف التصميم الموحد -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    
+    <!-- مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- مكتبة EmailJS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function(){
+            emailjs.init("VEo02s7LwqIyYPG7i");
+        })();
+    </script>
+    
+    <style>
+        /* --- تحسينات عامة على التصميم --- */
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-color, #f4f7f6);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary, #4318FF);
+            margin-bottom: 25px;
+            font-weight: 800;
+        }
+
+        /* تنسيق الحقول والنماذج */
+        .form-group {
+            margin-bottom: 20px;
+            transition: all 0.4s ease-in-out;
+            overflow: hidden;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 15px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background-color: #fcfcfc;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary, #4318FF);
+            box-shadow: 0 0 0 3px rgba(67, 24, 255, 0.1);
+            background-color: #fff;
+        }
+
+        /* تصميم الأزرار */
+        button[type="submit"] {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary, #4318FF);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 10px;
+        }
+
+        button[type="submit"]:hover:not(:disabled) {
+            background-color: #3210cc;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* الحقول الديناميكية (مخفية افتراضياً) */
+        .dynamic-field {
+            display: none;
+            opacity: 0;
+            animation: fadeInDown 0.4s forwards;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* شاشة الـ OTP */
+        .otp-container { 
+            display: none; 
+            text-align: center; 
+            animation: fadeUp 0.5s ease-out forwards;
+        }
+        
+        .otp-input { 
+            font-size: 30px; 
+            letter-spacing: 20px; 
+            text-align: center; 
+            color: var(--primary, #4318FF); 
+            font-weight: 800; 
+            border: 2px dashed #ccc;
+        }
+        
+        .btn-cancel { 
+            background: transparent !important; 
+            color: #ee5d50 !important; 
+            border: 2px solid rgba(238, 93, 80, 0.2) !important; 
+            margin-top: 15px;
+        }
+
+        .login-link { 
+            text-align: center; 
+            margin-top: 20px; 
+            font-size: 15px; 
+            font-weight: 600; 
+        }
+
+        /* --- استجابة الشاشات (Responsive) --- */
+        @media (max-width: 768px) {
+            .container {
+                margin: 20px;
+                padding: 20px;
+            }
+            input, select {
+                padding: 10px 12px;
+            }
+            .otp-input {
+                font-size: 24px;
+                letter-spacing: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        const savedColor = localStorage.getItem('primaryColor') || "#4318FF";
+        const savedName = localStorage.getItem('platformName') || "المنصة التعليمية";
+        const savedMode = localStorage.getItem('themeMode');
+        
+        document.documentElement.style.setProperty('--primary', savedColor);
+        document.title = `إنشاء حساب جديد - ${savedName}`;
+        if (savedMode === 'dark') document.body.classList.add('dark-mode');
+    </script>
+
+    <div class="container">
+        <!-- شاشة التسجيل -->
+        <div id="registrationFormContainer">
+            <h2 id="registerTitle">🎓 إنشاء حساب جديد</h2>
+            
+            <form id="registerForm" onsubmit="initiateRegistration(event)">
+                
+                <div class="form-group">
+                    <label>اسم الطالب بالكامل:</label>
+                    <input type="text" id="regFullName" placeholder="اكتب اسمك الثلاثي" required>
+                </div>
+
+                <div class="form-group">
+                    <label>المرحلة / الجامعة:</label>
+                    <select id="regUniversity" required onchange="handleUniversityChange()">
+                        <option value="" disabled selected>-- اختر مرحلتك الدراسية --</option>
+                        <option value="damanhour_uni">جامعة دمنهور</option>
+                        <option value="alex_uni">جامعة الإسكندرية</option>
+                        <option value="bachelor">بكالوريا</option>
+                    </select>
+                </div>
+
+                <!-- حقل الفرقة الدراسية (يظهر فقط لجامعة دمنهور والإسكندرية) -->
+                <div class="form-group dynamic-field" id="gradeWrapper">
+                    <label>الفرقة الدراسية:</label>
+                    <select id="regGrade">
+                        <option value="" disabled selected>-- اختر الفرقة الدراسية --</option>
+                        <option value="year_1">الفرقة الأولى</option>
+                        <option value="year_2">الفرقة الثانية</option>
+                        <option value="year_3">الفرقة الثالثة</option>
+                        <option value="year_4">الفرقة الرابعة</option>
+                    </select>
+                </div>
+
+                <!-- حقل السنتر (يظهر فقط للبكالوريوس) -->
+                <div class="form-group dynamic-field" id="centerWrapper">
+                    <label>السنتر التابع له:</label>
+                    <select id="regCenter">
+                        <option value="" disabled selected>جاري تحميل السناتر...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>البريد الإلكتروني (هام لتأكيد الحساب):</label>
+                    <input type="email" id="regEmail" placeholder="example@gmail.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>رقم هاتف الطالب (سيكون اسم المستخدم):</label>
+                    <input type="tel" id="regUsername" placeholder="مثال: 01xxxxxxxxx" required pattern="[0-9]{10,11}" title="يرجى إدخال رقم هاتف صحيح يتكون من 11 رقم">
+                </div>
+
+                <div class="form-group">
+                    <label>رقم هاتف ولي الأمر (للتواصل في حالة الغياب):</label>
+                    <input type="tel" id="regParentPhone" placeholder="رقم الموبايل الخاص بولي الأمر" required pattern="[0-9]{10,11}">
+                </div>
+
+                <div class="form-group">
+                    <label>الرقم السري (للدخول لاحقاً):</label>
+                    <input type="password" id="regPassword" placeholder="اكتب رقماً سرياً قوياً" required minlength="6">
+                </div>
+
+                <button type="submit" id="submitBtn">إرسال كود التحقق ✉️</button>
+                
+                <div class="login-link">
+                    لديك حساب بالفعل؟ <a href="auth/login.html" style="color: var(--primary);">تسجيل الدخول</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- شاشة تأكيد الإيميل (OTP) -->
+        <div id="otpFormContainer" class="otp-container">
+            <h2>✉️ تأكيد البريد الإلكتروني</h2>
+            <p style="color: #555; margin-bottom: 25px; line-height: 1.6;" id="otpMessage"></p>
+            
+            <form onsubmit="verifyOTP(event)">
+                <input type="text" id="otpInput" class="otp-input" maxlength="4" placeholder="----" required autocomplete="off" inputmode="numeric">
+                <button type="submit" id="confirmBtn" style="background: #05cd99;">تأكيد الكود وإنشاء الحساب ✅</button>
+                <button type="button" onclick="cancelRegistration()" class="btn-cancel">إلغاء وتعديل البيانات</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // إعدادات فايربيز
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform",
+            storageBucket: "dr-ahmed-rizk-platform.appspot.com",
+            messagingSenderId: "117735726313",
+            appId: "1:117735726313:web:2a58aa1c4be7137b53e478"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 🌟 الدالة المسؤولة عن إظهار/إخفاء الحقول بذكاء
+        function handleUniversityChange() {
+            const uniValue = document.getElementById('regUniversity').value;
+            
+            const gradeWrapper = document.getElementById('gradeWrapper');
+            const gradeSelect = document.getElementById('regGrade');
+            
+            const centerWrapper = document.getElementById('centerWrapper');
+            const centerSelect = document.getElementById('regCenter');
+
+            // إذا اختار جامعة إسكندرية أو دمنهور
+            if (uniValue === 'alex_uni' || uniValue === 'damanhour_uni') {
+                gradeWrapper.style.display = 'block';
+                gradeSelect.required = true;
+                
+                centerWrapper.style.display = 'none';
+                centerSelect.required = false;
+                centerSelect.value = ""; // تفريغ قيمة السنتر
+            } 
+            // إذا اختار بكالوريوس
+            else if (uniValue === 'bachelor') {
+                centerWrapper.style.display = 'block';
+                centerSelect.required = true;
+                
+                gradeWrapper.style.display = 'none';
+                gradeSelect.required = false;
+                gradeSelect.value = ""; // تفريغ قيمة الفرقة
+            }
+        }
+
+        // جلب السناتر من قاعدة البيانات (تجهز في الخلفية)
+        database.ref('centers').on('value', (snapshot) => {
+            const centerSelect = document.getElementById('regCenter');
+            if (snapshot.exists()) {
+                centerSelect.innerHTML = '<option value="" disabled selected>-- اختر السنتر التابع له --</option>';
+                const centers = snapshot.val();
+                const centersArray = Array.isArray(centers) ? centers : Object.values(centers);
+                centersArray.forEach(center => {
+                    centerSelect.innerHTML += `<option value="${center}">${center}</option>`;
+                });
+            } else {
+                centerSelect.innerHTML = '<option value="" disabled selected>لا توجد سناتر مضافة حتى الآن</option>';
+            }
+        });
+
+        let generatedOTP = "";
+        let pendingUserData = {};
+
+        function initiateRegistration(event) {
+            event.preventDefault(); 
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerText = "⏳ جاري التحقق من البيانات...";
+            submitBtn.disabled = true;
+
+            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+
+            database.ref('students/' + username).once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    alert("⚠️ رقم هاتف الطالب مسجل به حساب بالفعل!");
+                    resetBtn();
+                    return;
+                }
+
+                // حفظ البيانات المعروضة فقط لتجنب حفظ قيم فارغة (Null)
+                pendingUserData = {
+                    name: document.getElementById('regFullName').value.trim(),
+                    university: document.getElementById('regUniversity').value,
+                    // إذا لم يكن الحقل ظاهراً/مطلوباً، نعطيه قيمة افتراضية
+                    grade: document.getElementById('regGrade').value || "غير مطبق", 
+                    center: document.getElementById('regCenter').value || "غير مطبق",
+                    email: email,
+                    parentPhone: document.getElementById('regParentPhone').value.trim(),
+                    password: document.getElementById('regPassword').value,
+                    username: username
+                };
+
+                generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
+
+                const templateParams = {
+                    to_name: pendingUserData.name,
+                    to_email: email,
+                    otp_code: generatedOTP
+                };
+
+                submitBtn.innerText = "⏳ جاري إرسال كود التحقق للإيميل...";
+
+                emailjs.send('service_y9671et', 'template_wv4fjtc', templateParams)
+                    .then(function() {
+                        document.getElementById('registrationFormContainer').style.display = 'none';
+                        document.getElementById('otpFormContainer').style.display = 'block';
+                        
+                        let hiddenEmail = email.replace(/(.{2})(.*)(?=@)/, (gp1, gp2, gp3) => { return gp1 + gp3.replace(/./g, '*') });
+                        document.getElementById('otpMessage').innerHTML = `لقد أرسلنا كود تحقق يتكون من 4 أرقام إلى الإيميل:<br><strong style="color:var(--primary); font-size: 18px; display:inline-block; margin-top:10px;">${hiddenEmail}</strong>`;
+                        
+                        document.getElementById('otpInput').focus();
+                        resetBtn();
+                    }, function(error) {
+                        alert("❌ فشل الإرسال! يرجى التأكد من أن البريد الإلكتروني مكتوب بشكل صحيح.");
+                        console.error(error);
+                        resetBtn();
+                    });
+            }).catch((error) => {
+                alert("❌ حدث خطأ في الاتصال بقاعدة البيانات.");
+                resetBtn();
+            });
+
+            function resetBtn() {
+                submitBtn.innerText = "إرسال كود التحقق ✉️";
+                submitBtn.disabled = false;
+            }
+        }
+
+        function verifyOTP(event) {
+            event.preventDefault();
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.innerText = "⏳ جاري الإنشاء...";
+            confirmBtn.disabled = true;
+
+            const enteredOTP = document.getElementById('otpInput').value.trim();
+
+            if (enteredOTP === generatedOTP) {
+                // رفع البيانات النهائية لقاعدة البيانات
+                database.ref('students/' + pendingUserData.username).set({
+                    name: pendingUserData.name,
+                    university: pendingUserData.university, 
+                    grade: pendingUserData.grade,          
+                    center: pendingUserData.center,
+                    email: pendingUserData.email,
+                    parentPhone: pendingUserData.parentPhone,
+                    password: pendingUserData.password,
+                    registerDate: new Date().toLocaleDateString('ar-EG')
+                }).then(() => {
+                    alert(`🎉 تهانينا! تم إنشاء الحساب بنجاح. مرحباً بك يا ${pendingUserData.name} في المنصة.`);
+                    window.location.href = "auth/login.html"; 
+                }).catch((error) => {
+                    alert("❌ حدث خطأ أثناء حفظ البيانات.");
+                    resetConfirmBtn();
+                });
+            } else {
+                alert("❌ كود التحقق غير صحيح! تأكد من الأرقام المدخلة.");
+                resetConfirmBtn();
+                document.getElementById('otpInput').value = "";
+                document.getElementById('otpInput').focus();
+            }
+
+            function resetConfirmBtn() {
+                confirmBtn.innerHTML = "تأكيد الكود وإنشاء الحساب ✅";
+                confirmBtn.disabled = false;
+            }
+        }
+
+        function cancelRegistration() {
+            document.getElementById('otpFormContainer').style.display = 'none';
+            document.getElementById('registrationFormContainer').style.display = 'block';
+            document.getElementById('otpInput').value = ""; 
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>بوابة الطالب - المنصة التعليمية</title>
+    
+    <!-- خطوط جوجل -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- مكتبات Firebase و PDF -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #4318FF; 
+            --primary-hover: #3210cc;
+            --secondary: #707eae;
+            --success: #05CD99; 
+            --danger: #EE5D50;
+            --warning: #ffce20;
+            --dark-text: #2b3674;
+            --bg-light: #f4f7fe;
+            --card-bg: #ffffff;
+            --border-color: #e0e5f2;
+            --sidebar-width: 280px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        
+        body { background-color: var(--bg-light); color: var(--dark-text); display: flex; min-height: 100vh; overflow-x: hidden; }
+
+        /* =========================================
+           القائمة الجانبية (Sidebar)
+        ========================================= */
+        .sidebar {
+            width: var(--sidebar-width); background: var(--card-bg); padding: 30px 20px; 
+            border-left: 1px solid var(--border-color); position: fixed; height: 100vh;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.05); z-index: 1000; transition: 0.3s;
+        }
+        
+        .sidebar h3 { color: var(--primary); font-size: 1.4rem; font-weight: 800; margin-bottom: 40px; text-align: center; padding-bottom: 15px; border-bottom: 2px dashed var(--border-color);}
+        .sidebar ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        .sidebar ul li a {
+            display: flex; align-items: center; padding: 15px 20px; text-decoration: none;
+            color: var(--dark-text); font-weight: 700; border-radius: 12px; transition: 0.3s; font-size: 1rem;
+        }
+        .sidebar ul li a.active, .sidebar ul li a:hover {
+            background: var(--primary); color: white; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2); transform: translateX(-5px);
+        }
+
+        /* =========================================
+           المحتوى الرئيسي
+        ========================================= */
+        .main-content {
+            flex: 1; margin-right: var(--sidebar-width); padding: 40px; width: calc(100% - var(--sidebar-width));
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* كارت الدكتور التعريفي الفاخر */
+        .doctor-header {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--card-bg); padding: 25px 35px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid var(--border-color);
+            margin-bottom: 30px; transition: 0.3s;
+        }
+        .doctor-header:hover { box-shadow: 0 15px 35px rgba(0,0,0,0.06); transform: translateY(-3px);}
+        
+        .doctor-profile { display: flex; align-items: center; gap: 20px; }
+        .doctor-profile img {
+            width: 80px; height: 80px; border-radius: 50%; border: 4px solid var(--primary);
+            object-fit: cover; box-shadow: 0 8px 20px rgba(67, 24, 255, 0.15);
+        }
+        .doctor-info h3 { margin: 0 0 5px 0; color: var(--primary); font-size: 1.5rem; font-weight: 900; }
+        .doctor-info p { margin: 0; color: var(--dark-text); font-size: 0.95rem; font-weight: 700; opacity: 0.8; }
+        
+        .platform-badge {
+            background: rgba(67, 24, 255, 0.08); padding: 10px 20px; border-radius: 12px;
+            display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--primary);
+        }
+
+        /* شريط الترحيب والمعلومات */
+        .welcome-section { margin-bottom: 30px; }
+        .welcome-message { color: var(--dark-text); font-weight: 900; font-size: 1.8rem; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;}
+        
+        .info-badge {
+            background: var(--primary); color: white; padding: 15px 25px; border-radius: 14px;
+            box-shadow: 0 10px 25px rgba(67, 24, 255, 0.25); display: inline-flex; align-items: center; gap: 15px; flex-wrap: wrap;
+        }
+        .info-badge span { font-weight: 800; font-size: 1rem; display: flex; align-items: center; gap: 8px; color: white !important;}
+        .info-badge .divider { width: 2px; height: 20px; background: rgba(255,255,255,0.3); }
+
+        /* العناوين والشبكة (Grid) */
+        .section-title { font-size: 1.4rem; font-weight: 900; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; color: var(--dark-text); border-right: 4px solid var(--primary); padding-right: 15px;}
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+
+        /* الكروت العصرية */
+        .exam-card {
+            background: var(--card-bg); padding: 30px; border-radius: 20px; border: 1px solid var(--border-color);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.02); transition: all 0.3s ease; position: relative; overflow: hidden;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .exam-card:hover { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(67, 24, 255, 0.08); border-color: var(--primary); }
+        
+        .exam-card.completed { border-top: 5px solid var(--success); background: #ffffff; }
+        .exam-card.completed:hover { border-color: var(--success); box-shadow: 0 15px 35px rgba(5, 205, 153, 0.08);}
+        
+        .exam-card h4 { font-size: 1.3rem; font-weight: 800; margin-bottom: 20px; color: var(--primary); line-height: 1.4;}
+        .exam-card.completed h4 { color: var(--success); }
+        
+        .exam-details { background: var(--bg-light); padding: 15px; border-radius: 12px; margin-bottom: 25px; }
+        .exam-details p { font-size: 0.95rem; font-weight: 700; color: var(--dark-text); margin: 8px 0; display: flex; justify-content: space-between;}
+        .exam-details p:last-child { margin-bottom: 0; }
+        .exam-details p strong { color: var(--primary); }
+        
+        /* حالة انتظار المراجعة المقالية */
+        .pending-badge {
+            background: rgba(255, 206, 32, 0.15); color: #d97706; padding: 15px; border-radius: 12px;
+            font-weight: 800; font-size: 0.95rem; text-align: center; margin-top: 15px; border: 1px dashed var(--warning);
+        }
+
+        /* الأزرار القوية */
+        .action-btn {
+            display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; 
+            padding: 16px; border-radius: 14px; font-weight: 800; font-size: 1.05rem; 
+            transition: 0.3s; border: none; cursor: pointer; font-family: 'Cairo'; margin-top: auto;
+        }
+        .start-btn { background: var(--primary); color: white; box-shadow: 0 8px 20px rgba(67, 24, 255, 0.25); }
+        .start-btn:hover { background: var(--primary-hover); transform: translateY(-3px); box-shadow: 0 12px 25px rgba(67, 24, 255, 0.35); }
+        
+        .download-btn { 
+            background: var(--success); 
+            color: white; 
+            border: none; 
+            box-shadow: 0 8px 16px rgba(5, 205, 153, 0.25);
+        }
+        .download-btn:hover { 
+            background: #04b082; 
+            transform: translateY(-3px); 
+            box-shadow: 0 12px 20px rgba(5, 205, 153, 0.35); 
+        }
+
+        /* استجابة الموبايل */
+        @media (max-width: 992px) {
+            .dashboard-layout { flex-direction: column; }
+            .sidebar { 
+                width: 100%; height: auto; position: relative; border-left: none; 
+                padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); z-index: 10;
+            }
+            .sidebar h3 { margin-bottom: 20px; padding-bottom: 10px; }
+            .sidebar ul { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; flex-direction: row;}
+            .sidebar ul li { margin-bottom: 0; }
+            .sidebar ul li a { padding: 10px 15px; font-size: 0.9rem; text-align: center; }
+            
+            .main-content { margin-right: 0; width: 100%; padding: 20px; }
+        }
+
+        @media (max-width: 768px) {
+            .doctor-header { flex-direction: column; gap: 20px; text-align: center; align-items: center; padding: 25px;}
+            .doctor-profile { flex-direction: column; }
+            .platform-badge { width: 100%; justify-content: center; }
+            .welcome-message { font-size: 1.4rem; flex-direction: column; align-items: flex-start;}
+            .info-badge { flex-direction: column; align-items: flex-start; gap: 12px; width: 100%;}
+            .info-badge .divider { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        const savedColor = localStorage.getItem('primaryColor') || "#4318FF";
+        document.documentElement.style.setProperty('--primary', savedColor);
+    </script>
+
+    <div class="dashboard-layout">
+        <!-- القائمة الجانبية -->
+        <aside class="sidebar">
+            <h3 id="sidebarTitle">🎓 بوابة الطالب</h3>
+            <ul>
+                <li><a href="index.html" class="active">🏠 لوحة الامتحانات</a></li>
+                <li><a href="result.html">📊 تقارير ومستوى الدرجات</a></li>
+                <li><a href="#" onclick="logoutUser()" style="color: var(--danger);">🚪 تسجيل الخروج</a></li>
+            </ul>
+        </aside>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content">
+            
+            <!-- كارت الدكتور التعريفي الفاخر -->
+            <div class="doctor-header">
+                <div class="doctor-profile">
+                 <img src="../assets/images/myphoto.jpg" alt="صورة المعلم" id="doctorImage" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3774/3774299.png'">
+                    <div class="doctor-info">
+                        <h3 id="doctorNameDisplay">جاري التحميل...</h3>
+                        <p>أستاذ المادة - منصة الامتحانات التفاعلية</p>
+                    </div>
+                </div>
+                <div class="platform-badge">
+                    <span>👨‍🏫 المنصة الرسمية</span>
+                </div>
+            </div>
+
+            <!-- قسم الترحيب ومعلومات الطالب -->
+            <div class="welcome-section">
+                <h2 class="welcome-message" id="welcomeMessage">جاري تحميل بياناتك... ⏳</h2>
+                <div class="info-badge" id="studentInfoBadge">
+                    <span id="studentUniversityDisplay">📍 جاري التحديد...</span>
+                    <div class="divider"></div>
+                    <span id="studentSecondaryDisplay">📚 جاري التحديد...</span>
+                </div>
+            </div>
+
+            <!-- قسم الامتحانات المتاحة -->
+            <div id="examsSection" style="margin-bottom: 50px;">
+                <h3 class="section-title">📝 الامتحانات المتاحة لك الآن</h3>
+                <div class="cards-grid" id="availableExamsContainer">
+                    <p style="color: var(--dark-text); font-weight: 700; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px dashed var(--border-color);">⏳ جاري البحث عن الامتحانات المجدولة لمرحلتك...</p>
+                </div>
+            </div>
+
+            <!-- قسم الامتحانات المنجزة -->
+            <div>
+                <h3 class="section-title" style="border-color: var(--success);">✅ سجل الامتحانات التي تم إنجازها</h3>
+                <div class="cards-grid" id="completedExamsContainer">
+                    <p style="color: var(--dark-text); font-weight: 700; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px dashed var(--border-color);">⏳ جاري جلب الأرشيف والتقارير الخاصة بك...</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // إعدادات فايربيز
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const currentPhone = localStorage.getItem('currentLoggedInStudent');
+        let currentStudentData = null;
+
+        const platformName = localStorage.getItem('platformName') || "منصة د. أحمد رزق";
+        document.title = `بوابة الطالب - ${platformName}`;
+        document.getElementById('doctorNameDisplay').innerText = platformName;
+
+        const uniTranslations = { 'alex_uni': 'جامعة الإسكندرية', 'damanhour_uni': 'جامعة دمنهور', 'bachelor': 'بكالوريا', 'baccalaureate': 'بكالوريا' };
+        const gradeTranslations = { 'year_1': 'الفرقة الأولى', 'year_2': 'الفرقة الثانية', 'year_3': 'الفرقة الثالثة', 'year_4': 'الفرقة الرابعة' };
+
+        if (!currentPhone) {
+            window.location.href = "../auth/login.html";
+        } else {
+            database.ref('students/' + currentPhone).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    currentStudentData = snapshot.val();
+                    document.getElementById('welcomeMessage').innerHTML = `أهلاً بك يا بطل، <span style="color:var(--primary);">${currentStudentData.name}</span> 🚀`;
+                    
+                    const uniKey = currentStudentData.university;
+                    const gradeKey = currentStudentData.grade;
+                    const centerVal = currentStudentData.center;
+                    
+                    document.getElementById('studentUniversityDisplay').innerHTML = `📍 ${uniTranslations[uniKey] || 'مرحلة غير محددة'}`;
+                    
+                    if (uniKey === 'bachelor' || uniKey === 'baccalaureate') {
+                        document.getElementById('studentSecondaryDisplay').innerHTML = `🏢 السنتر: ${centerVal || 'عام'}`;
+                    } else {
+                        document.getElementById('studentSecondaryDisplay').innerHTML = `📚 ${gradeTranslations[gradeKey] || gradeKey}`;
+                    }
+                    
+                    loadExams();
+                } else {
+                    logoutUser();
+                }
+            });
+        }
+
+      function loadExams() {
+            const availableContainer = document.getElementById('availableExamsContainer');
+            const completedContainer = document.getElementById('completedExamsContainer');
+            
+            database.ref(`students/${currentPhone}/results`).once('value').then(resultsSnapshot => {
+                const studentResults = resultsSnapshot.val() || {};
+                const completedExamIds = Object.keys(studentResults); 
+
+                database.ref('exams').on('value', examsSnapshot => {
+                    availableContainer.innerHTML = ''; completedContainer.innerHTML = '';
+                    
+                    if (examsSnapshot.exists()) {
+                        const exams = examsSnapshot.val();
+                        let hasAvailable = false, hasCompleted = false;
+
+                        for (let examId in exams) {
+                            const exam = exams[examId];
+                            let isEligible = false;
+
+                            let studentUni = currentStudentData.university === 'bachelor' ? 'baccalaureate' : currentStudentData.university;
+                            let examUni = exam.university === 'bachelor' ? 'baccalaureate' : exam.university;
+
+                            if (examUni === studentUni) {
+                                if (studentUni === 'baccalaureate') {
+                                    if (exam.center === currentStudentData.center || exam.center === "all") isEligible = true;
+                                } else {
+                                    if (exam.grade === currentStudentData.grade) isEligible = true;
+                                }
+                            }
+
+                            if (exam.isArchived === true) isEligible = false;
+
+                            if (isEligible && exam.startDate && exam.endDate) {
+                                const now = new Date();
+                                const start = new Date(exam.startDate);
+                                const end = new Date(exam.endDate);
+                                if (now < start || now > end) { isEligible = false; }
+                            }
+
+                            if (isEligible) {
+                                if (completedExamIds.includes(examId)) {
+                                    hasCompleted = true;
+                                    const res = studentResults[examId];
+                                    
+                                    let statusContent = '';
+                                    if(res.status === "pending_review") {
+                                        statusContent = `<div class="pending-badge">⏳ ورقتك قيد المراجعة اليدوية من قبل المعلم.</div>`;
+                                    } else {
+                                        statusContent = `
+                                            <div class="exam-details">
+                                                <p>الدرجة المعتمدة: <strong>${res.score} / ${res.total}</strong></p>
+                                                <p>تاريخ الانتهاء: <strong>${res.dateTaken.split(',')[0]}</strong></p>
+                                            </div>
+                                            <button class="action-btn download-btn" onclick="downloadExamReport('${examId}')">📥 تحميل تقرير الإجابات (PDF)</button>
+                                        `;
+                                    }
+
+                                    completedContainer.innerHTML += `
+                                        <div class="exam-card completed">
+                                            <h4>✅ ${exam.name}</h4>
+                                            ${statusContent}
+                                        </div>`;
+                                } else {
+                                    hasAvailable = true;
+                                    availableContainer.innerHTML += `
+                                        <div class="exam-card">
+                                            <h4>📝 ${exam.name}</h4>
+                                            <div class="exam-details">
+                                                <p>المدة الزمنية: <strong>${exam.duration} دقيقة</strong></p>
+                                                <p>إجمالي الأسئلة: <strong>${exam.totalQuestions} سؤال</strong></p>
+                                                <p>الدرجة الكلية: <strong>${exam.totalScore || exam.totalQuestions || '--'} درجة</strong></p>
+                                            </div>
+                                            <button class="action-btn start-btn" onclick="goToExam('${examId}')">▶️ ابدأ الامتحان الآن</button>
+                                        </div>`;
+                                }
+                            }
+                        }
+                        if (!hasAvailable) availableContainer.innerHTML = '<p style="color: var(--dark-text); font-weight: 700; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px dashed var(--border-color); grid-column: 1/-1;">لا توجد امتحانات جديدة متاحة لك حالياً. استعد للامتحانات القادمة!</p>';
+                        if (!hasCompleted) completedContainer.innerHTML = '<p style="color: var(--dark-text); font-weight: 700; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px dashed var(--border-color); grid-column: 1/-1;">لم تقم بإنجاز أي امتحانات حتى الآن. سجلك فارغ.</p>';
+                    }
+                });
+            });
+        }
+        
+        function goToExam(examId) { window.location.href = `take_exam.html?id=${examId}`; }
+        function logoutUser() { localStorage.removeItem('currentLoggedInStudent'); window.location.href = "../auth/login.html"; }
+        
+        function downloadExamReport(examId) {
+            alert("⏳ جاري تجهيز التقرير التفصيلي الخاص بك في ملف PDF... يرجى الانتظار.");
+            database.ref('exams/' + examId).once('value').then(examSnap => {
+                const examData = examSnap.val();
+                database.ref(`students/${currentPhone}/results/${examId}`).once('value').then(resSnap => {
+                    const resData = resSnap.val();
+                    const percentage = ((resData.score / resData.total) * 100).toFixed(1);
+                    const statusColor = percentage >= 50 ? "#05CD99" : "#EE5D50";
+                    const statusText = percentage >= 50 ? "ناجح" : "راسب";
+
+                    let htmlContent = `
+                        <div style="width: 800px; padding: 30px; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; background-color: #f4f7fe; color: #2b3674;">
+                            <div style="background: #ffffff; border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e0e5f2;">
+                                <div style="text-align: center; border-bottom: 2px dashed #e0e5f2; padding-bottom: 20px; margin-bottom: 30px;">
+                                    <h1 style="color: #4318FF; margin: 0; font-size: 32px; font-weight: 900;">${platformName}</h1>
+                                    <h2 style="color: #a3aed1; margin: 10px 0 0 0; font-size: 18px; font-weight: 700;">تقرير الأداء الأكاديمي ونموذج الإجابة</h2>
+                                </div>
+                                <div style="background: #f9fbfd; padding: 25px; border-radius: 16px; margin-bottom: 35px; border: 1px solid #e0e5f2;">
+                                    <table style="width: 100%; font-size: 16px; font-weight: 800; border:none; text-align: right; color: #2b3674;">
+                                        <tr>
+                                            <td style="padding: 12px; border:none;">👨‍🎓 الطالب: <span style="color: #4318FF;">${currentStudentData.name}</span></td>
+                                            <td style="padding: 12px; border:none;">📝 الامتحان: ${resData.examName || examData.name}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; border:none;">📅 التاريخ: ${resData.dateTaken.split(',')[0]}</td>
+                                            <td style="padding: 12px; border:none;">📌 الدرجة المحصلة: <span style="color: ${statusColor};">${resData.score} / ${resData.total}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2" style="padding: 12px; border:none;">📊 النسبة المئوية: <span style="color: ${statusColor};">${percentage}%</span> (${statusText})</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <h3 style="padding-bottom: 15px; margin-bottom: 25px; color: #2b3674; font-weight: 900;">📝 تفاصيل ومراجعة الإجابات:</h3>
+                    `;
+
+                    const questionsList = Array.isArray(examData.questions) ? examData.questions : Object.values(examData.questions || {});
+                    const studentAnswers = resData.answers || {}; 
+                    const teacherFeedback = resData.teacherFeedback || {};
+
+                    questionsList.forEach((q, idx) => {
+                        if (q.type === 'mcq' || q.type === 'tf') {
+                            let studentAnswerIndex = studentAnswers[idx];
+                            let isCorrect = (studentAnswerIndex == q.correctAnswerIndex);
+                            let answerColor = isCorrect ? "#05CD99" : "#EE5D50"; 
+                            let studentAnswerText = (studentAnswerIndex !== undefined && studentAnswerIndex !== null) ? q.options[studentAnswerIndex] : "لم يقم الطالب بالإجابة";
+
+                            htmlContent += `
+                                <div style="margin-bottom: 20px; padding: 20px; border: 1px solid #e0e5f2; border-radius: 14px; background: #ffffff; page-break-inside: avoid; border-right: 4px solid ${answerColor}; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                                    <h4 style="margin: 0 0 15px 0; color: #2b3674; font-size: 16px; font-weight: 800;">س${idx + 1}: ${q.questionText} <span style="color:#a3aed1; font-size:14px;">(${q.points} درجة)</span></h4>
+                                    <p style="margin: 5px 0; color: ${answerColor}; font-weight: 800; font-size: 15px;">
+                                        ${isCorrect ? '✅ إجابة صحيحة:' : '❌ إجابة خاطئة:'} <span style="color:#2b3674;">${studentAnswerText}</span>
+                                    </p>
+                                    ${!isCorrect ? `
+                                    <p style="margin: 10px 0 0 0; color: #05CD99; font-weight: 800; font-size: 15px; background: #e6f9f4; padding: 10px; border-radius: 8px;">
+                                        🎯 الإجابة النموذجية: ${q.options[q.correctAnswerIndex]}
+                                    </p>` : ''}
+                                </div>
+                            `;
+                        } else if (q.type === 'essay') {
+                            let studentText = studentAnswers[idx] || "لم يقم بالإجابة.";
+                            let feedback = teacherFeedback[idx] || { awardedPoints: 0, comment: "لا يوجد تعليق." };
+                            let modelHtml = q.modelAnswer ? `<div style="background:#e6f9f4; padding:10px; border-radius:8px; margin-top:10px;"><strong style="color:#05CD99;">💡 الإجابة النموذجية:</strong> <span style="color:#2b3674;">${q.modelAnswer}</span></div>` : '';
+
+                            htmlContent += `
+                                <div style="margin-bottom: 20px; padding: 20px; border: 1px solid #e0e5f2; border-radius: 14px; background: #ffffff; page-break-inside: avoid; border-right: 4px solid #ffce20; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                                    <h4 style="margin: 0 0 15px 0; color: #2b3674; font-size: 16px; font-weight: 800;">س${idx + 1} (مقال): ${q.questionText} <span style="color:#a3aed1; font-size:14px;">(${q.points} درجة)</span></h4>
+                                    
+                                    <div style="background: #f9fbfd; padding: 15px; border-radius: 10px; margin-bottom: 10px;">
+                                        <strong style="color:#ffce20;">📝 إجابتك:</strong>
+                                        <p style="margin: 5px 0 0 0; color: #2b3674; line-height: 1.6; font-weight: 600;">${studentText}</p>
+                                    </div>
+                                    
+                                    ${modelHtml}
+
+                                    <div style="margin-top: 15px; border-top: 1px dashed #e0e5f2; padding-top: 15px;">
+                                        <p style="margin: 0 0 5px 0; color: #2b3674; font-weight: 800;">الدرجة الممنوحة من المراجع: <strong style="color: #05CD99; font-size: 16px;">${feedback.awardedPoints} / ${q.points}</strong></p>
+                                        ${feedback.comment ? `<p style="margin: 0; color: #a3aed1; font-weight: 700; font-size: 14px;">تعليق المراجع: ${feedback.comment}</p>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    htmlContent += `</div></div>`;
+
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = htmlContent;
+                    tempDiv.style.width = "800px"; tempDiv.style.position = "absolute"; tempDiv.style.top = "0"; tempDiv.style.left = "0"; tempDiv.style.opacity = "0"; tempDiv.style.pointerEvents = "none"; tempDiv.style.zIndex = "-9999";
+                    document.body.appendChild(tempDiv);
+
+                    const opt = {
+                        margin: 10, filename: `تقرير_أداء_${currentStudentData.name}.pdf`, image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true, windowWidth: 800, backgroundColor: '#f4f7fe' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+
+                    html2pdf().set(opt).from(tempDiv).save().then(() => { document.body.removeChild(tempDiv); });
+                });
+            });
+        }
+    </script>
+</body>
+</html>

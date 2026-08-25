@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تصحيح الأسئلة المقالية - لوحة الإدارة</title>
+    
+    <!-- خطوط جوجل -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --primary: #1e293b;
+            --primary-hover: #0f172a;
+            --secondary: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark-text: #0f172a;
+            --bg-light: #f1f5f9;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --sidebar-width: 280px;
+        }
+
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background-color: var(--bg-light); 
+            color: var(--dark-text);
+            margin: 0; padding: 0; box-sizing: border-box;
+        }
+
+        /* هيكل لوحة التحكم المتجاوب */
+        .dashboard-layout { display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: var(--sidebar-width); background: var(--card-bg);
+            border-left: 1px solid var(--border-color); padding: 30px 20px;
+            position: fixed; height: 100vh; overflow-y: auto; transition: all 0.3s ease;
+            z-index: 1000; box-shadow: -5px 0 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar h3 { color: var(--primary); font-weight: 800; margin-bottom: 40px; text-align: center; font-size: 1.4rem; padding-bottom: 15px; border-bottom: 2px dashed var(--border-color);}
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar ul li { margin-bottom: 10px; }
+        .sidebar ul li a {
+            display: block; padding: 15px 20px; text-decoration: none;
+            color: var(--secondary); font-weight: 700; border-radius: 12px; transition: 0.3s;
+        }
+        .sidebar ul li a:hover, .sidebar ul li a.active { background: var(--primary); color: white; box-shadow: 0 10px 20px rgba(30, 41, 59, 0.2); transform: translateX(-5px);}
+
+        .main-content { flex: 1; margin-right: var(--sidebar-width); padding: 40px; }
+        
+        .page-header { margin-bottom: 30px; }
+        .page-title { font-size: 1.8rem; font-weight: 800; margin: 0; color: var(--dark-text); }
+
+        /* منطقة الفلاتر */
+        .filters-card {
+            background: var(--card-bg); padding: 25px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        .form-group { margin-bottom: 0; }
+        .form-group label { display: block; font-weight: 800; margin-bottom: 12px; color: var(--dark-text); font-size: 1.05rem;}
+        .form-group select { 
+            width: 100%; padding: 16px; border-radius: 14px; border: 2px solid var(--border-color); 
+            background: #fcfcfc; color: var(--dark-text); font-weight: 700; font-family: 'Cairo'; font-size: 1rem;
+            outline: none; transition: 0.3s; box-sizing: border-box;
+        }
+        .form-group select:focus { border-color: var(--primary); background: var(--card-bg); box-shadow: 0 0 0 4px rgba(30, 41, 59, 0.1); }
+
+        /* شبكة الطلاب (Cards) */
+        .students-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        
+        .student-card {
+            background: var(--card-bg); padding: 25px; border-radius: 20px; 
+            border: 1px solid var(--border-color); box-shadow: 0 5px 20px rgba(0,0,0,0.02);
+            transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .student-card:hover { border-color: var(--warning); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        
+        .student-info h4 { margin: 0 0 15px 0; color: var(--primary); font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 8px;}
+        .student-info p { margin: 8px 0; color: var(--secondary); font-weight: 700; font-size: 0.95rem; }
+        
+        .mark-btn { 
+            background: rgba(245, 158, 11, 0.15); color: #d97706; border: none; padding: 15px; 
+            border-radius: 14px; font-weight: 800; font-size: 1.05rem; cursor: pointer; width: 100%; 
+            font-family: 'Cairo'; margin-top: 20px; transition: 0.3s; 
+        }
+        .mark-btn:hover { background: var(--warning); color: white; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(245, 158, 11, 0.25); }
+
+        /* نافذة المراجعة (Modal) - مع تأثيرات Premium */
+        .grading-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(15, 23, 42, 0.6); z-index: 2000; overflow-y: auto; padding: 20px; box-sizing: border-box;
+            backdrop-filter: blur(8px); /* تأثير Glassmorphism */
+        }
+        .grading-content {
+            background: var(--card-bg); max-width: 850px; margin: 40px auto; padding: 40px; 
+            border-radius: 24px; position: relative; animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        @keyframes slideDown { from { transform: translateY(-30px) scale(0.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+
+        .close-modal { 
+            position: absolute; left: 25px; top: 25px; background: var(--bg-light); color: var(--secondary); 
+            border: none; width: 40px; height: 40px; border-radius: 50%; font-weight: bold; font-size: 1.2rem;
+            cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;
+        }
+        .close-modal:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger); transform: rotate(90deg);}
+
+        .essay-box { background: var(--bg-light); border: 1px dashed var(--border-color); padding: 25px; border-radius: 16px; margin-bottom: 30px; transition: 0.3s;}
+        .essay-box:hover { border-color: var(--secondary); }
+        .essay-box h5 { color: var(--dark-text); margin: 0 0 20px 0; font-size: 1.1rem; line-height: 1.6; }
+        
+        .answer-block { background: var(--card-bg); padding: 20px; border-radius: 12px; border-right: 4px solid var(--primary); margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);}
+        .answer-block strong { color: var(--primary); display: block; margin-bottom: 8px; font-size: 0.95rem;}
+        .answer-block p { margin: 0; font-weight: 700; color: var(--dark-text); line-height: 1.7; font-size: 1rem;}
+
+        .model-answer { background: rgba(16, 185, 129, 0.05); border-right-color: var(--success); }
+        .model-answer strong { color: var(--success); }
+
+        .grading-controls { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-top: 25px; }
+        .grading-controls label { display: block; font-size: 0.95rem; font-weight: 800; color: var(--dark-text); margin-bottom: 8px;}
+        .grading-controls input { width: 100%; padding: 15px; border: 2px solid var(--border-color); border-radius: 12px; font-family: 'Cairo'; font-weight: 700; outline: none; transition: 0.3s; background: #fcfcfc; box-sizing: border-box; font-size: 1rem;}
+        .grading-controls input:focus { border-color: var(--primary); background: var(--card-bg); box-shadow: 0 0 0 4px rgba(30, 41, 59, 0.1);}
+        
+        .submit-grades-btn { background: var(--success); color: white; border: none; padding: 20px; border-radius: 16px; width: 100%; font-size: 1.15rem; font-weight: 800; cursor: pointer; font-family: 'Cairo'; margin-top: 30px; transition: 0.3s; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);}
+        .submit-grades-btn:hover { background: #059669; transform: translateY(-3px); box-shadow: 0 15px 25px rgba(16, 185, 129, 0.3);}
+
+        /* التجاوب مع شاشات الموبايل */
+        @media (max-width: 992px) {
+            .dashboard-layout { flex-direction: column; }
+            .sidebar { 
+                width: 100%; height: auto; position: relative; border-left: none; 
+                padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); z-index: 10;
+            }
+            .sidebar h3 { margin-bottom: 20px; padding-bottom: 10px; }
+            .sidebar ul { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+            .sidebar ul li { margin-bottom: 0; }
+            .sidebar ul li a { padding: 10px 15px; font-size: 0.9rem; text-align: center; }
+            
+            .main-content { margin-right: 0; width: 100%; padding: 20px; }
+        }
+
+        @media (max-width: 768px) {
+            .grading-controls { grid-template-columns: 1fr; }
+            .grading-content { padding: 25px; margin: 20px auto; width: 95%;}
+            .close-modal { top: 15px; left: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        const savedColor = localStorage.getItem('primaryColor') || "#4318FF";
+        document.documentElement.style.setProperty('--primary', savedColor);
+    </script>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <h3>👨‍🏫 لوحة الإدارة</h3>
+            <ul>
+                <li><a href="index.html">🏠 الرئيسية للإحصائيات</a></li>
+                <li><a href="add_exam.html">📝 بناء امتحان جديد</a></li>
+                <li><a href="manage_exams.html">📂 إدارة الامتحانات</a></li>
+                <li><a href="mark_exams.html" class="active">✍️ تصحيح المقالي</a></li>
+                <li><a href="center_report.html">📊 تقارير الدرجات</a></li>
+                <li><a href="manage_students.html">👥 إدارة الطلاب</a></li>
+                <li><a href="settings.html">⚙️ إعدادات المنصة</a></li>
+                <li><a href="../auth/login.html" style="color: var(--danger);">🚪 تسجيل الخروج</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h2 class="page-title">✍️ تصحيح الأسئلة المقالية</h2>
+            </div>
+            
+            <div class="filters-card">
+                <div class="form-group">
+                    <label>اختر الامتحان الذي تريد تصحيحه:</label>
+                    <select id="examSelect" onchange="loadPendingStudents()">
+                        <option value="" disabled selected>⏳ جاري تحميل الامتحانات المقالية...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="students-grid" id="studentsContainer">
+                <p style="color: var(--secondary); font-weight: 700; grid-column: 1 / -1; text-align: center; padding: 40px; background: var(--card-bg); border-radius: 20px; border: 1px solid var(--border-color);">الرجاء تحديد امتحان من القائمة العلوية لعرض أوراق الطلاب التي تحتاج إلى مراجعة.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- نافذة التصحيح (Modal) -->
+    <div class="grading-modal" id="gradingModal">
+        <div class="grading-content">
+            <button class="close-modal" onclick="closeModal()">✖</button>
+            <h3 style="color: var(--primary); margin-top: 0; border-bottom: 2px dashed var(--border-color); padding-bottom: 20px; font-size: 1.5rem;" id="modalStudentName">تصحيح ورقة الطالب</h3>
+            
+            <div id="essayQuestionsContainer">
+                <!-- سيتم توليد الأسئلة والإجابات هنا -->
+            </div>
+
+            <button class="submit-grades-btn" id="saveGradesBtn" onclick="saveGrades()">✅ اعتماد الدرجة النهائية وحفظ التقرير</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let allExams = {};
+        let allStudents = {};
+        let currentGradingStudentPhone = null;
+        let currentGradingExamId = null;
+        let currentExamQuestions = [];
+        let currentStudentResult = null;
+
+        // تحميل الامتحانات التي تحتوي على مقالي فقط
+        database.ref('exams').on('value', snapshot => {
+            const select = document.getElementById('examSelect');
+            select.innerHTML = '<option value="" disabled selected>-- اختر الامتحان المطلوب --</option>';
+            
+            if (snapshot.exists()) {
+                allExams = snapshot.val();
+                let hasEssayExams = false;
+                
+                let examsArray = Object.keys(allExams).map(key => ({ id: key, ...allExams[key] })).reverse();
+                
+                examsArray.forEach(exam => {
+                    if (exam.hasEssay === true) {
+                        hasEssayExams = true;
+                        select.innerHTML += `<option value="${exam.id}">${exam.name}</option>`;
+                    }
+                });
+
+                if (!hasEssayExams) {
+                    select.innerHTML = '<option value="" disabled selected>لا توجد امتحانات تحتوي على أسئلة مقالية مسجلة بالنظام</option>';
+                }
+            }
+        });
+
+        // تحميل بيانات الطلاب وتحديث العرض عند اختيار امتحان
+        database.ref('students').on('value', snapshot => {
+            allStudents = snapshot.val() || {};
+            if(document.getElementById('examSelect').value) {
+                loadPendingStudents();
+            }
+        });
+
+        function loadPendingStudents() {
+            const examId = document.getElementById('examSelect').value;
+            if (!examId) return;
+
+            const container = document.getElementById('studentsContainer');
+            container.innerHTML = '';
+            let pendingCount = 0;
+
+            for (let phone in allStudents) {
+                const student = allStudents[phone];
+                if (student.results && student.results[examId]) {
+                    const result = student.results[examId];
+                    if (result.status === "pending_review") {
+                        pendingCount++;
+                        container.innerHTML += `
+                            <div class="student-card">
+                                <div class="student-info">
+                                    <h4>👨‍🎓 ${student.name}</h4>
+                                    <p>📱 الهاتف: <span style="font-family: monospace; font-size: 1rem;">${phone}</span></p>
+                                    <p>🎯 المحصل من الموضوعي: <strong style="color:var(--success); font-size: 1.1rem;">${result.score}</strong> درجة</p>
+                                    <p>📅 تاريخ الحل: <span style="direction:ltr; display:inline-block; font-weight:800;">${result.dateTaken}</span></p>
+                                </div>
+                                <button class="mark-btn" onclick="openGradingModal('${phone}', '${examId}')">✍️ مراجعة الورقة وتصحيحها</button>
+                            </div>
+                        `;
+                    }
+                }
+            }
+
+            if (pendingCount === 0) {
+                container.innerHTML = `<p style="color: var(--success); font-weight: 800; font-size: 1.1rem; text-align: center; grid-column: 1/-1; padding: 40px; background: var(--card-bg); border-radius: 20px; border: 1px solid var(--success);">🎉 رائع! لا توجد أوراق تنتظر التصحيح لهذا الامتحان حالياً.</p>`;
+            }
+        }
+
+        function openGradingModal(phone, examId) {
+            currentGradingStudentPhone = phone;
+            currentGradingExamId = examId;
+            const student = allStudents[phone];
+            currentStudentResult = student.results[examId];
+            
+            currentExamQuestions = Array.isArray(allExams[examId].questions) ? allExams[examId].questions : Object.values(allExams[examId].questions);
+
+            document.getElementById('modalStudentName').innerText = `تصحيح ورقة الطالب: ${student.name}`;
+            
+            const container = document.getElementById('essayQuestionsContainer');
+            container.innerHTML = '';
+
+            let essayIndexCount = 1;
+
+            currentExamQuestions.forEach((q, index) => {
+                if (q.type === 'essay') {
+                    const studentAnswerText = currentStudentResult.answers[index] || "لم يقم الطالب بكتابة إجابة.";
+                    const modelAnswerHTML = q.modelAnswer ? `<div class="answer-block model-answer"><strong>💡 الإجابة النموذجية كمرجع:</strong><p>${q.modelAnswer}</p></div>` : '';
+
+                    container.innerHTML += `
+                        <div class="essay-box" data-qindex="${index}" data-maxscore="${q.points}">
+                            <h5><span style="color:var(--primary); font-weight:800; font-size: 1.2rem;">س${essayIndexCount}:</span> ${q.questionText} <span style="color:var(--danger); font-size:0.9rem; font-weight:700;">(الدرجة القصوى: ${q.points})</span></h5>
+                            
+                            ${modelAnswerHTML}
+
+                            <div class="answer-block">
+                                <strong>📝 إجابة الطالب الفعلية:</strong>
+                                <p>${studentAnswerText}</p>
+                            </div>
+
+                            <div class="grading-controls">
+                                <div>
+                                    <label>درجة الطالب في هذا السؤال:</label>
+                                    <input type="number" class="score-input" min="0" max="${q.points}" 
+                                        oninput="if(parseInt(this.value) > ${q.points}) { this.value = ${q.points}; } else if(parseInt(this.value) < 0) { this.value = 0; }" 
+                                        placeholder="الدرجة من ${q.points}" required>
+                                </div>
+                                <div>
+                                    <label>تعليق للمراجعة (سيظهر للطالب):</label>
+                                    <input type="text" class="comment-input" placeholder="اكتب ملاحظاتك على الإجابة لتوجيه الطالب (اختياري)...">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    essayIndexCount++;
+                }
+            });
+
+            document.getElementById('gradingModal').style.display = 'block';
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeModal() {
+            document.getElementById('gradingModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function saveGrades() {
+            const btn = document.getElementById('saveGradesBtn');
+            const essayBoxes = document.querySelectorAll('.essay-box');
+            
+            let totalEssayScore = 0;
+            let teacherFeedbackObj = currentStudentResult.teacherFeedback || {};
+            let isValid = true;
+            let errorMessage = "";
+
+            for (let box of essayBoxes) {
+                const qIndex = box.getAttribute('data-qindex');
+                const maxScore = parseInt(box.getAttribute('data-maxscore'));
+                const scoreInputEl = box.querySelector('.score-input');
+                const scoreInput = scoreInputEl.value;
+                const commentInput = box.querySelector('.comment-input').value;
+
+                scoreInputEl.style.borderColor = "var(--border-color)"; 
+
+                // التحقق من أن المراجع أدخل الدرجات
+                if (scoreInput === "") {
+                    isValid = false;
+                    errorMessage = "⚠️ يرجى إدخال درجة لجميع الأسئلة المقالية لتتمكن من الاعتماد!";
+                    scoreInputEl.style.borderColor = "var(--danger)";
+                    break;
+                }
+
+                let givenScore = parseInt(scoreInput);
+
+                // جدار الحماية (Validation)
+                if (givenScore > maxScore) {
+                    isValid = false;
+                    errorMessage = `⚠️ خطأ في التقييم: لا يمكن إعطاء الطالب (${givenScore}) في سؤال أقصى درجة له هي (${maxScore})!`;
+                    scoreInputEl.style.borderColor = "var(--danger)";
+                    break;
+                }
+                
+                if (givenScore < 0) {
+                    isValid = false;
+                    errorMessage = "⚠️ خطأ في التقييم: لا يمكن إعطاء درجة سالبة.";
+                    scoreInputEl.style.borderColor = "var(--danger)";
+                    break;
+                }
+
+                totalEssayScore += givenScore;
+                
+                teacherFeedbackObj[qIndex] = {
+                    awardedPoints: givenScore,
+                    comment: commentInput
+                };
+            }
+
+            if (!isValid) {
+                alert(errorMessage);
+                return;
+            }
+
+            btn.innerText = "⏳ جاري الاعتماد والحفظ...";
+            btn.disabled = true;
+
+            // الدمج بين درجة التصحصح الآلي (الموضوعي) ودرجة المراجعة اليدوية (المقالي)
+            const finalTotalScore = currentStudentResult.score + totalEssayScore;
+
+            const updates = {};
+            updates[`students/${currentGradingStudentPhone}/results/${currentGradingExamId}/score`] = finalTotalScore;
+            updates[`students/${currentGradingStudentPhone}/results/${currentGradingExamId}/status`] = "graded";
+            updates[`students/${currentGradingStudentPhone}/results/${currentGradingExamId}/teacherFeedback`] = teacherFeedbackObj;
+            updates[`exams/${currentGradingExamId}/results/${currentGradingStudentPhone}`] = finalTotalScore;
+
+            database.ref().update(updates).then(() => {
+                alert(`✅ تم اعتماد تقييمك للورقة بنجاح!\nالمجموع النهائي للطالب أصبح: ${finalTotalScore}`);
+                closeModal();
+                btn.innerText = "✅ اعتماد الدرجة النهائية وحفظ التقرير";
+                btn.disabled = false;
+            }).catch(error => {
+                alert("❌ حدث خطأ أثناء الاتصال بالخادم لرفع الدرجات. تأكد من جودة الإنترنت.");
+                btn.innerText = "✅ اعتماد الدرجة النهائية وحفظ التقرير";
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
