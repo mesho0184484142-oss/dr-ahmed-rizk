@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تقرير الدرجات - المنصة التعليمية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --primary: #4318FF;
+            --secondary: #a3aed1;
+            --success: #05CD99;
+            --danger: #EE5D50;
+            --card-bg: #ffffff;
+            --bg-light: #f4f7fe;
+            --border-color: #e0e5f2;
+            --dark-text: #2b3674;
+            --warning: #ffce20;
+        }
+
+        body { font-family: 'Cairo', sans-serif; background: var(--bg-light); color: var(--dark-text); margin: 0; display: flex; }
+
+        .result-card { 
+            background: var(--card-bg); padding: 30px; border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 25px; 
+            border: 1px solid var(--border-color); display: flex; 
+            justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; 
+            transition: all 0.3s ease; position: relative; overflow: hidden;
+        }
+        .result-card:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 15px 35px rgba(67, 24, 255, 0.08); }
+        
+        /* شريط الحالة للأسئلة المقالية */
+        .status-ribbon { position: absolute; top: 0; left: 0; width: 100%; height: 5px; }
+        .ribbon-pending { background: var(--warning); }
+        .ribbon-graded { background: var(--success); }
+
+        .exam-info { flex: 1; }
+        .exam-info h4 { margin: 0 0 15px 0; color: var(--primary); font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px;}
+        .exam-info p { margin: 8px 0; color: var(--secondary); font-weight: 700; font-size: 15px; }
+        .exam-info strong { color: var(--dark-text); }
+        
+        .badge-pending { background: rgba(255, 206, 32, 0.1); color: #d4a000; padding: 4px 10px; border-radius: 8px; font-size: 13px; border: 1px solid #d4a000;}
+        .badge-graded { background: rgba(5, 205, 153, 0.1); color: var(--success); padding: 4px 10px; border-radius: 8px; font-size: 13px; border: 1px solid var(--success);}
+
+        .score-section { display: flex; align-items: center; gap: 25px; }
+
+        .score-circle { 
+            width: 100px; height: 100px; border-radius: 50%; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; font-size: 24px; font-weight: 800; 
+            color: white; direction: ltr; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        .score-circle span { font-size: 14px; font-weight: 700; opacity: 0.95; margin-top: -2px; }
+        
+        .score-pass { background: linear-gradient(135deg, var(--success) 0%, #43E794 100%); box-shadow: 0 10px 20px rgba(5, 205, 153, 0.3); }
+        .score-fail { background: linear-gradient(135deg, var(--danger) 0%, #FF7F74 100%); box-shadow: 0 10px 20px rgba(238, 93, 80, 0.3); }
+        .score-pending { background: linear-gradient(135deg, var(--secondary) 0%, #d1d8e8 100%); box-shadow: 0 10px 20px rgba(163, 174, 209, 0.3); }
+
+        .print-report-btn {
+            background: var(--bg-light); color: var(--primary); border: 2px solid var(--primary);
+            padding: 10px 20px; border-radius: 12px; font-family: 'Cairo'; font-weight: 800; font-size: 15px; cursor: pointer; transition: 0.3s;
+        }
+        .print-report-btn:hover { background: var(--primary); color: white; }
+
+        .empty-state { text-align: center; padding: 60px 20px; background: var(--card-bg); border-radius: 20px; color: var(--secondary); font-weight: 800; font-size: 18px; border: 2px dashed var(--border-color); }
+
+        /* تنسيقات تعليقات المدرس */
+        .feedback-box { width: 100%; background: #fdfdfe; border: 1px dashed var(--success); padding: 15px; border-radius: 12px; margin-top: 15px; }
+        .feedback-box h5 { color: var(--success); margin: 0 0 10px 0; font-size: 15px; }
+        .comment-item { background: #f4fff9; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 14px; font-weight: 600;}
+
+        @media print {
+            .sidebar, .print-report-btn { display: none !important; }
+            .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+            .result-card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+            body { background: white; }
+        }
+
+        /* =========================================================
+           إضافات التجاوب (Responsive) للموبايل 
+           ========================================================= */
+        /* تصميم القائمة الجانبية الأصلي */
+        .sidebar {
+            width: 250px;
+            background: var(--card-bg);
+            padding: 20px;
+            min-height: 100vh;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .sidebar h3 {
+            color: var(--primary);
+            margin-bottom: 30px;
+            font-size: 20px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar ul li {
+            margin-bottom: 15px;
+        }
+
+        .sidebar ul li a {
+            text-decoration: none;
+            color: var(--dark-text);
+            font-size: 16px;
+            font-weight: 700;
+            display: block;
+        }
+
+        .sidebar ul li a.active {
+            color: var(--primary);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 992px) {
+            body { flex-direction: column; }
+            .sidebar {
+                width: 100% !important; height: auto !important; position: relative !important;
+                border-left: none !important; border-bottom: 1px solid var(--border-color);
+                padding: 15px !important; z-index: 10; min-height: auto;
+            }
+            .sidebar h3 { margin-bottom: 15px !important; text-align: center; }
+            .sidebar ul {
+                display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 10px;
+            }
+            .sidebar ul li { margin-bottom: 0; }
+            .sidebar ul li a { padding: 10px 15px; font-size: 14px; background: rgba(67, 24, 255, 0.05); border-radius: 8px;}
+            .main-content {
+                margin-right: 0 !important; width: 100% !important; padding: 20px !important; box-sizing: border-box;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .result-card { flex-direction: column; text-align: center; justify-content: center; }
+            .score-section { flex-direction: column; }
+            .exam-info h4 { justify-content: center; flex-direction: column; gap: 10px; }
+            .print-report-btn { width: 100%; margin-top: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h3 id="sidebarTitle">🎓 بوابة الطالب</h3>
+        <ul>
+            <li><a href="index.html">🏠 الرئيسية (اللوحة)</a></li>
+            <li><a href="index.html#examsSection">📝 امتحاناتي</a></li>
+            <li><a href="result.html" class="active">📊 تقارير الدرجات</a></li>
+            <li><a href="#" onclick="logoutUser()" style="color: var(--danger);">🚪 تسجيل الخروج</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+            <h2 style="margin: 0;">📊 السجل الأكاديمي وتقرير الدرجات</h2>
+            <button class="print-report-btn" onclick="window.print()">🖨️ طباعة السجل بالكامل</button>
+        </div>
+        
+        <div class="alert-box" style="background: rgba(67, 24, 255, 0.05); border: 1px solid var(--primary); color: var(--primary); padding: 15px; border-radius: 12px; margin-bottom: 30px;">
+            <span id="studentNameDisplay" style="font-weight: 700; font-size: 16px;">جاري تحميل بيانات الطالب... ⏳</span>
+        </div>
+
+        <div id="resultsContainer">
+            <div class="empty-state">⏳ جاري سحب النتائج المعتمدة من قاعدة البيانات...</div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const currentPhone = localStorage.getItem('currentLoggedInStudent');
+        
+        if (!currentPhone) {
+            window.location.href = "../auth/login.html";
+        } else {
+            database.ref('students/' + currentPhone).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    const studentData = snapshot.val();
+                    let stageText = studentData.university === 'bachelor' || studentData.university === 'baccalaureate' ? 'بكالوريا' : 'طالب جامعي';
+                    document.getElementById('studentNameDisplay').innerHTML = `👨‍🎓 الاسم: <strong>${studentData.name}</strong> &nbsp;|&nbsp; 📱 الهاتف: <strong>${currentPhone}</strong> &nbsp;|&nbsp; 📚 المرحلة: <strong>${stageText}</strong>`;
+                    loadResults();
+                } else {
+                    logoutUser();
+                }
+            });
+        }
+
+        function loadResults() {
+            const container = document.getElementById('resultsContainer');
+            
+            database.ref(`students/${currentPhone}/results`).on('value', snapshot => {
+                container.innerHTML = ''; 
+
+                if (snapshot.exists()) {
+                    const results = snapshot.val();
+                    const resultsArray = Object.keys(results).map(key => ({ id: key, ...results[key] })).reverse();
+
+                    resultsArray.forEach(res => {
+                        const isPending = res.status === "pending_review";
+                        
+                        let scoreSectionHTML = '';
+                        let feedbackHTML = '';
+                        let ribbonClass = isPending ? 'ribbon-pending' : 'ribbon-graded';
+
+                        if (isPending) {
+                            scoreSectionHTML = `
+                                <div class="score-circle score-pending">
+                                    --/--
+                                    <span>قيد المراجعة</span>
+                                </div>
+                            `;
+                        } else {
+                            const percentage = ((res.score / res.total) * 100).toFixed(1);
+                            const statusClass = percentage >= 50 ? 'score-pass' : 'score-fail';
+                            const statusWord = percentage >= 50 ? 'ناجح' : 'راسب';
+
+                            scoreSectionHTML = `
+                                <div style="text-align: center; font-weight: 800; color: var(--secondary);">
+                                    النسبة<br><span style="font-size: 20px; color: var(--dark-text);">${percentage}%</span>
+                                </div>
+                                <div class="score-circle ${statusClass}">
+                                    ${res.score}/${res.total}
+                                    <span>${statusWord}</span>
+                                </div>
+                            `;
+
+                            // إذا كان هناك تعليقات من المدرس (للمقالي)
+                            if (res.teacherFeedback) {
+                                let commentsList = '';
+                                for(let qIndex in res.teacherFeedback) {
+                                    if(res.teacherFeedback[qIndex].comment) {
+                                        commentsList += `<div class="comment-item">💡 ملاحظة على س${parseInt(qIndex)+1}: ${res.teacherFeedback[qIndex].comment}</div>`;
+                                    }
+                                }
+                                if(commentsList !== '') {
+                                    feedbackHTML = `
+                                        <div class="feedback-box">
+                                            <h5>✍️ تعليقات المصحح:</h5>
+                                            ${commentsList}
+                                        </div>
+                                    `;
+                                }
+                            }
+                        }
+
+                        container.innerHTML += `
+                            <div class="result-card">
+                                <div class="status-ribbon ${ribbonClass}"></div>
+                                <div class="exam-info">
+                                    <h4>
+                                        📝 ${res.examName} 
+                                        ${isPending ? '<span class="badge-pending">⏳ الإجابات المقالية قيد المراجعة والتصحيح</span>' : '<span class="badge-graded">✅ تم الاعتماد</span>'}
+                                    </h4>
+                                    <p>📅 تاريخ الأداء: <strong>${res.dateTaken}</strong></p>
+                                    ${!isPending ? `
+                                        <p>🎯 الدرجة النهائية للامتحان: <strong>${res.total} درجة</strong></p>
+                                        <p>📌 الدرجة المحصلة: <strong style="color: ${((res.score/res.total)*100) >= 50 ? 'var(--success)' : 'var(--danger)'};">${res.score} درجة</strong></p>
+                                    ` : `<p>📌 الدرجة المحصلة: <strong>ستظهر بعد تقييم الإدارة.</strong></p>`}
+                                </div>
+                                <div class="score-section">
+                                    ${scoreSectionHTML}
+                                </div>
+                                ${feedbackHTML}
+                            </div>
+                        `;
+                    });
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            📭 السجل الأكاديمي فارغ حالياً.<br>
+                            <span style="font-size:15px; font-weight:600; opacity:0.8; margin-top:10px; display:block;">لم يتم رصد أي نتائج امتحانات لك على المنصة حتى هذه اللحظة.</span>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function logoutUser() {
+            localStorage.removeItem('currentLoggedInStudent');
+            window.location.href = "../auth/login.html";
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تسجيل الدخول - المنصة التعليمية</title>
+    
+    <!-- خط كايرو -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --primary: #4318FF;
+            --primary-hover: #3311cc;
+            --secondary: #a3aed1;
+            --success: #05CD99;
+            --danger: #EE5D50;
+            --dark-text: #2b3674;
+            --bg-light: #f4f7fe;
+            --card-bg: #ffffff;
+            --border-color: #e0e5f2;
+        }
+
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background: var(--bg-light); 
+            color: var(--dark-text); 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 15px; 
+            box-sizing: border-box;
+        }
+
+        .container { 
+            background: var(--card-bg); 
+            padding: 40px 30px; 
+            border-radius: 24px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05); 
+            width: 100%; 
+            max-width: 420px; 
+            animation: fadeUp 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 { 
+            color: var(--primary); 
+            margin: 0 0 25px 0;
+            font-weight: 800; 
+            font-size: 1.6rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: var(--dark-text);
+            font-size: 0.95rem;
+        }
+
+        input, select { 
+            width: 100%; 
+            padding: 16px; 
+            border-radius: 14px; 
+            border: 2px solid var(--border-color); 
+            outline: none; 
+            font-family: 'Cairo', sans-serif; 
+            font-size: 1rem; 
+            box-sizing: border-box; 
+            background: #fcfcfc;
+            color: var(--dark-text);
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        /* تنسيق مخصص للسهم في القائمة المنسدلة */
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234318FF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: left 15px top 50%;
+            background-size: 12px auto;
+            cursor: pointer;
+        }
+
+        input:focus, select:focus { 
+            border-color: var(--primary); 
+            background: var(--card-bg);
+            box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1);
+        }
+
+        .links-container {
+            display: flex;
+            justify-content: flex-end; /* لعرض "هل نسيت كلمة المرور" على اليسار أو اليمين حسب الرغبة */
+            margin-bottom: 20px;
+        }
+
+        .forgot-link {
+            color: var(--danger);
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .forgot-link:hover {
+            color: #d64538;
+            text-decoration: underline;
+        }
+
+        button[type="submit"] { 
+            width: 100%; 
+            padding: 16px; 
+            background: var(--primary);
+            color: white; 
+            border: none; 
+            border-radius: 14px; 
+            font-weight: 800; 
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.1rem; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            box-shadow: 0 8px 16px rgba(67, 24, 255, 0.2);
+        }
+
+        button[type="submit"]:hover:not(:disabled) { 
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px rgba(67, 24, 255, 0.3);
+        }
+
+        button[type="submit"]:disabled {
+            background: var(--secondary);
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .register-text {
+            text-align: center;
+            margin-top: 25px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--secondary);
+        }
+
+        .register-text a {
+            color: var(--primary);
+            font-weight: 800;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .register-text a:hover {
+            text-decoration: underline;
+        }
+
+        /* تجاوب للموبايل */
+        @media (max-width: 400px) {
+            .container { padding: 30px 20px; }
+            h2 { font-size: 1.4rem; }
+            input, select, button[type="submit"] { padding: 14px; font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        const savedColor = localStorage.getItem('primaryColor') || "#4318FF";
+        const savedName = localStorage.getItem('platformName') || "منصة د. أحمد رزق";
+        
+        document.documentElement.style.setProperty('--primary', savedColor);
+        document.title = `تسجيل الدخول - ${savedName}`;
+    </script>
+
+    <div class="container">
+        <h2>🔐 تسجيل الدخول</h2>
+        
+        <form onsubmit="handleLogin(event)">
+            
+            <div class="form-group">
+                <label>نوع الحساب:</label>
+                <select id="loginType" required>
+                    <option value="student">👨‍🎓 طالب</option>
+                    <option value="parent">👨‍👩‍👦 ولي أمر</option>
+                    <option value="admin">👨‍🏫 إدارة (دكتور / مساعد)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>رقم الهاتف:</label>
+                <input type="tel" id="loginUsername" placeholder="أدخل رقم الهاتف المسجل به الحساب" required autocomplete="off" pattern="[0-9]{10,11}">
+            </div>
+
+            <div class="form-group">
+                <label id="passwordLabel">الرقم السري:</label>
+                <input type="password" id="loginPassword" placeholder="أدخل الرقم السري" required>
+            </div>
+
+            <div class="links-container">
+                <a href="forgot_password.html" class="forgot-link">هل نسيت كلمة المرور؟</a>
+            </div>
+
+            <button type="submit" id="loginBtn">تسجيل الدخول 🚀</button>
+            
+            <div class="register-text">
+                ليس لديك حساب؟ <a href="../register.html">إنشاء حساب جديد</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // إعدادات فايربيز
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform",
+            storageBucket: "dr-ahmed-rizk-platform.appspot.com",
+            messagingSenderId: "117735726313",
+            appId: "1:117735726313:web:2a58aa1c4be7137b53e478"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
+
+        // تغيير النص التوضيحي للرقم السري بناءً على نوع الحساب المختار
+        document.getElementById('loginType').addEventListener('change', function() {
+            const passLabel = document.getElementById('passwordLabel');
+            if (this.value === 'parent') {
+                passLabel.innerText = "رقم هاتف ولي الأمر (بمثابة الرقم السري):";
+            } else {
+                passLabel.innerText = "الرقم السري:";
+            }
+        });
+
+        // دالة الدخول الرئيسية
+        function handleLogin(event) {
+            event.preventDefault(); 
+            const loginBtn = document.getElementById('loginBtn');
+            const originalText = loginBtn.innerText;
+            loginBtn.innerText = "⏳ جاري التحقق...";
+            loginBtn.disabled = true;
+
+            const loginType = document.getElementById('loginType').value;
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            // 1. مسار الإدارة (الدكتور أو المساعدين)
+            if (loginType === "admin") {
+                if (username === "01038337898" && password === "Ahmed987654321") {
+                    window.location.href = "../dashboard/index.html";
+                    return;
+                }
+                
+                database.ref('admins/' + username).once('value').then((snapshot) => {
+                    if (snapshot.exists()) {
+                        const adminPass = snapshot.val();
+                        if (password === adminPass) {
+                            window.location.href = "../dashboard/index.html";
+                        } else {
+                            alert("❌ الرقم السري للإدارة غير صحيح!");
+                            resetBtn();
+                        }
+                    } else {
+                        alert("❌ هذا الرقم غير مسجل في قسم الإدارة!");
+                        resetBtn();
+                    }
+                }).catch((error) => {
+                    alert("❌ حدث خطأ في الاتصال بقاعدة البيانات.");
+                    resetBtn();
+                });
+                return; 
+            }
+
+            // 2. مسار الطالب وولي الأمر
+            database.ref('students/' + username).once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    const studentData = snapshot.val();
+                    
+                    if (loginType === "student") {
+                        if (studentData.password === password) {
+                            localStorage.setItem('currentLoggedInStudent', username);
+                            window.location.href = "../student/index.html";
+                        } else {
+                            alert("❌ الرقم السري للطالب غير صحيح!");
+                            resetBtn();
+                        }
+                    } 
+                    else if (loginType === "parent") {
+                        if (studentData.parentPhone === password) {
+                            localStorage.setItem('currentLoggedInStudent', username);
+                            alert(`مرحباً بك يا ولي أمر الطالب (${studentData.name || 'الطالب'}). سيتم تحويلك لصفحة تقارير الدرجات.`);
+                            window.location.href = "../student/result.html";
+                        } else {
+                            alert("❌ بيانات ولي الأمر غير صحيحة! تأكد أن رقم الهاتف بالأعلى هو رقم الطالب، والرقم السري هو رقم ولي الأمر.");
+                            resetBtn();
+                        }
+                    }
+                } else {
+                    alert("❌ رقم الهاتف غير مسجل لدينا في النظام كطالب.");
+                    resetBtn();
+                }
+            }).catch((error) => {
+                alert("❌ حدث خطأ في الاتصال بالخادم.");
+                resetBtn();
+            });
+
+            function resetBtn() {
+                loginBtn.innerText = originalText;
+                loginBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
