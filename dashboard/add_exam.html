@@ -50,11 +50,14 @@
             margin-bottom: 25px; margin-top: 40px; flex-wrap: wrap; gap: 15px;
         }
         
-        .action-buttons { display: flex; gap: 10px; }
+        .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
         .btn-add-mcq { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; font-family: 'Cairo';}
         .btn-add-tf { background: var(--secondary); color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; font-family: 'Cairo';}
+        .btn-add-essay { background: var(--warning); color: var(--dark-text); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.3s; font-family: 'Cairo';}
+        
         .btn-add-mcq:hover { background: #3210cc; transform: translateY(-2px); }
         .btn-add-tf:hover { background: #8291be; transform: translateY(-2px); }
+        .btn-add-essay:hover { background: #e6b800; transform: translateY(-2px); }
 
         /* كارت السؤال */
         .question-card { 
@@ -78,7 +81,7 @@
         .delete-q-btn { background: rgba(238, 93, 80, 0.1); color: var(--danger); border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; font-family: 'Cairo';}
         .delete-q-btn:hover { background: var(--danger); color: white; }
 
-        .q-text-input { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 20px; font-family: 'Cairo'; font-weight: 600; font-size: 16px; outline: none; }
+        .q-text-input { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 20px; font-family: 'Cairo'; font-weight: 600; font-size: 16px; outline: none; box-sizing: border-box; }
         .q-text-input:focus { border-color: var(--primary); }
 
         /* شبكة الخيارات */
@@ -95,11 +98,15 @@
         .option-item input[type="text"] { flex: 1; border: none; outline: none; background: transparent; font-family: 'Cairo'; font-weight: 600; font-size: 15px; color: var(--dark-text); }
         .option-item input[type="text"]:read-only { color: var(--primary); font-weight: 800; cursor: default; }
 
+        /* تنسيقات السؤال المقالي */
+        .essay-notice { background: rgba(255, 206, 32, 0.1); color: var(--dark-text); padding: 15px; border-radius: 12px; font-weight: 700; border: 1px dashed var(--warning); margin-bottom: 10px;}
+        .q-model-answer { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: 12px; font-family: 'Cairo'; font-weight: 600; font-size: 15px; outline: none; resize: vertical; box-sizing: border-box;}
+        .q-model-answer:focus { border-color: var(--primary); }
+
         .submit-btn { width: 100%; background: var(--success); color: white; font-size: 18px; font-weight: 800; padding: 18px; border: none; border-radius: 15px; cursor: pointer; transition: 0.3s; margin-top: 20px; font-family: 'Cairo'; }
         .submit-btn:hover { background: #04b082; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(5, 205, 153, 0.2); }
         .submit-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* تصميم قسم المواعيد المضاف حديثاً */
         .dates-box { background: rgba(67, 24, 255, 0.05); padding: 20px; border-radius: 12px; border: 1px dashed var(--primary); margin-bottom: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
         @media (max-width: 768px) {
@@ -126,6 +133,7 @@
             <li><a href="index.html">🏠 الرئيسية للإحصائيات</a></li>
             <li><a href="add_exam.html" class="active">📝 بناء امتحان جديد</a></li>
             <li><a href="manage_exams.html">📂 إدارة الامتحانات والأرشيف</a></li>
+            <li><a href="mark_exams.html">✍️ تصحيح المقالي (جديد)</a></li>
             <li><a href="center_report.html">📊 تقارير الدرجات</a></li>
             <li><a href="manage_students.html">👥 إدارة الطلاب</a></li>
             <li><a href="settings.html">⚙️ إعدادات المنصة</a></li>
@@ -175,7 +183,6 @@
                 <input type="number" id="examDuration" min="5" placeholder="مثال: 60" required>
             </div>
 
-            <!-- 🚀 قسم المواعيد الذكي الذي تم دمجه -->
             <div class="dates-box">
                 <div class="form-group" style="margin: 0;">
                     <label style="color: var(--primary);">📅 يفتح للطلاب في (اختياري):</label>
@@ -193,6 +200,7 @@
                 <div class="action-buttons">
                     <button type="button" class="btn-add-mcq" onclick="addQuestion('mcq')">➕ سؤال اختياري</button>
                     <button type="button" class="btn-add-tf" onclick="addQuestion('tf')">➕ سؤال صح/خطأ</button>
+                    <button type="button" class="btn-add-essay" onclick="addQuestion('essay')">✍️ سؤال مقالي</button>
                 </div>
             </div>
 
@@ -248,6 +256,7 @@
             if (type === 'mcq') {
                 badgeText = 'اختيار من متعدد';
                 optionsHTML = `
+                    <p style="margin: 0 0 15px 0; font-size: 14px; color: var(--secondary);">حدد الإجابة الصحيحة بالنقر على الدائرة المجاورة لها:</p>
                     <div class="options-grid">
                         ${[0, 1, 2, 3].map(i => `
                         <div class="option-item" id="opt-wrap-${questionCounter}-${i}">
@@ -260,6 +269,7 @@
             } else if (type === 'tf') {
                 badgeText = 'صح أو خطأ';
                 optionsHTML = `
+                    <p style="margin: 0 0 15px 0; font-size: 14px; color: var(--secondary);">حدد الإجابة الصحيحة بالنقر على الدائرة المجاورة لها:</p>
                     <div class="options-grid tf-grid">
                         <div class="option-item" id="opt-wrap-${questionCounter}-0">
                             <input type="radio" name="correct-${questionCounter}" value="0" checked onchange="highlightCorrect(this, ${questionCounter})">
@@ -270,6 +280,12 @@
                             <input type="text" class="q-opt" value="خطأ" readonly>
                         </div>
                     </div>
+                `;
+            } else if (type === 'essay') {
+                badgeText = 'سؤال مقالي (يصحح يدوياً)';
+                optionsHTML = `
+                    <div class="essay-notice">⚠️ سوف يظهر للطالب مربع نصي لكتابة الإجابة، وستقوم الإدارة بتصحيحها ووضع الدرجة والتعليق لاحقاً.</div>
+                    <textarea class="q-model-answer" placeholder="اكتب الإجابة النموذجية أو النقاط الهامة هنا (اختياري - لمساعدتك أثناء التصحيح)..." rows="3"></textarea>
                 `;
             }
 
@@ -292,16 +308,20 @@
                     </div>
                 </div>
                 <input type="text" class="q-text-input q-text" placeholder="اكتب نص السؤال بوضوح هنا..." required>
-                <p style="margin: 0 0 15px 0; font-size: 14px; color: var(--secondary);">حدد الإجابة الصحيحة بالنقر على الدائرة المجاورة لها:</p>
                 ${optionsHTML}
             `;
             
             container.appendChild(qCard);
             updateQuestionNumbers();
-            highlightCorrect(qCard.querySelector('input[type="radio"]:checked'), questionCounter);
+            
+            // تفعيل اللون للإجابة الصحيحة (فقط في أسئلة الاختيارات)
+            if (type !== 'essay') {
+                highlightCorrect(qCard.querySelector('input[type="radio"]:checked'), questionCounter);
+            }
         }
 
         function highlightCorrect(radioBtn, qId) {
+            if(!radioBtn) return;
             const wrappers = document.querySelectorAll(`#q-card-${qId} .option-item`);
             wrappers.forEach(w => w.classList.remove('correct-selected'));
             radioBtn.closest('.option-item').classList.add('correct-selected');
@@ -334,7 +354,6 @@
 
             if (!name || !uni || !duration) return alert('⚠️ يرجى إكمال بيانات الامتحان الأساسية (الاسم، المرحلة، الوقت).');
 
-            // 🚀 التحقق من التواريخ (فيتشر تم دمجه)
             if (startDate && endDate) {
                 if(new Date(startDate) >= new Date(endDate)) {
                     return alert("❌ خطأ: تاريخ إغلاق الامتحان يجب أن يكون بعد تاريخ الفتح!");
@@ -356,25 +375,40 @@
             let questionsList = [];
             let isValid = true;
             let totalExamScore = 0;
+            let hasEssay = false;
 
             qCards.forEach((card) => {
                 const text = card.querySelector('.q-text').value.trim();
                 const score = parseInt(card.querySelector('.q-score-input').value) || 1;
                 const qType = card.getAttribute('data-qtype');
                 
-                const optsInputs = Array.from(card.querySelectorAll('.q-opt'));
-                const opts = optsInputs.map(opt => opt.value.trim());
-                const correctRadio = card.querySelector('input[type="radio"]:checked');
-                
-                if (!text || opts.some(o => o === "")) isValid = false;
+                if (!text) isValid = false;
 
-                questionsList.push({
-                    type: qType,
-                    questionText: text,
-                    options: opts,
-                    correctAnswerIndex: parseInt(correctRadio.value),
-                    points: score
-                });
+                if (qType === 'mcq' || qType === 'tf') {
+                    const optsInputs = Array.from(card.querySelectorAll('.q-opt'));
+                    const opts = optsInputs.map(opt => opt.value.trim());
+                    const correctRadio = card.querySelector('input[type="radio"]:checked');
+                    
+                    if (opts.some(o => o === "")) isValid = false;
+
+                    questionsList.push({
+                        type: qType,
+                        questionText: text,
+                        options: opts,
+                        correctAnswerIndex: parseInt(correctRadio.value),
+                        points: score
+                    });
+                } else if (qType === 'essay') {
+                    hasEssay = true;
+                    const modelAnswer = card.querySelector('.q-model-answer').value.trim();
+                    
+                    questionsList.push({
+                        type: 'essay',
+                        questionText: text,
+                        modelAnswer: modelAnswer, // حفظ الإجابة النموذجية كمرجع
+                        points: score
+                    });
+                }
 
                 totalExamScore += score; 
             });
@@ -386,7 +420,6 @@
 
             const newExamRef = database.ref('exams').push();
             
-            // 🚀 دمج كافة خصائص الامتحان في قاعدة البيانات
             const examData = {
                 id: newExamRef.key,
                 name: name,
@@ -397,6 +430,7 @@
                 startDate: startDate || "",
                 endDate: endDate || "",
                 isArchived: false,
+                hasEssay: hasEssay, // 💡 علامة تبلغ النظام أن الامتحان يحتاج مراجعة يدوية
                 questions: questionsList,
                 totalQuestions: questionsList.length,
                 totalScore: totalExamScore, 
@@ -406,7 +440,7 @@
 
             newExamRef.set(examData).then(() => {
                 alert(`🎉 تم رفع الامتحان بنجاح للطلاب!\nإجمالي الدرجات: ${totalExamScore} درجة.`);
-                window.location.href = 'manage_exams.html'; // توجيه ذكي لصفحة الإدارة بعد الرفع
+                window.location.href = 'manage_exams.html'; 
             }).catch(error => {
                 alert('❌ حدث خطأ أثناء الاتصال بالقاعدة. يرجى المحاولة مرة أخرى.');
                 publishBtn.innerText = "🚀 اعتماد ونشر الامتحان";
