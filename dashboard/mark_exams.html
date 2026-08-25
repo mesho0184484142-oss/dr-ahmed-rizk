@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تصحيح الأسئلة المقالية - لوحة الإدارة</title>
-    <!-- استدعاء الخطوط وتنسيقات لوحة التحكم الأساسية -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
     
-    <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -40,7 +38,6 @@
         }
         .form-group select:focus { border-color: var(--primary); }
 
-        /* كروت الطلاب المنتظرين للتصحيح */
         .students-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         
         .student-card {
@@ -60,7 +57,6 @@
         }
         .mark-btn:hover { background: #e6b800; transform: translateY(-2px); }
 
-        /* شاشة التصحيح (Modal) */
         .grading-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(11, 20, 55, 0.8); z-index: 2000; overflow-y: auto; padding: 20px; box-sizing: border-box;
@@ -75,7 +71,7 @@
         .close-modal { position: absolute; left: 20px; top: 20px; background: rgba(238,93,80,0.1); color: var(--danger); border: none; width: 35px; height: 35px; border-radius: 50%; font-weight: bold; cursor: pointer; transition: 0.3s;}
         .close-modal:hover { background: var(--danger); color: white; }
 
-        .essay-box { background: var(--bg-light); border: 1px solid var(--border-color); padding: 20px; border-radius: 15px; margin-bottom: 25px; }
+        .essay-box { background: var(--bg-light); border: 1px solid var(--border-color); padding: 20px; border-radius: 15px; margin-bottom: 25px; transition: 0.3s;}
         .essay-box h5 { color: var(--dark-text); margin: 0 0 15px 0; font-size: 16px; line-height: 1.6; }
         
         .answer-block { background: #ffffff; padding: 15px; border-radius: 10px; border-right: 4px solid var(--primary); margin-bottom: 15px; }
@@ -86,7 +82,7 @@
         .model-answer strong { color: var(--success); }
 
         .grading-controls { display: grid; grid-template-columns: 1fr 2fr; gap: 15px; margin-top: 15px; }
-        .grading-controls input { width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 10px; font-family: 'Cairo'; font-weight: 700; outline: none; }
+        .grading-controls input { width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 10px; font-family: 'Cairo'; font-weight: 700; outline: none; transition: 0.3s;}
         .grading-controls input:focus { border-color: var(--primary); }
         
         .submit-grades-btn { background: var(--success); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-size: 18px; font-weight: 800; cursor: pointer; font-family: 'Cairo'; margin-top: 20px; transition: 0.3s; }
@@ -167,7 +163,6 @@
         let currentExamQuestions = [];
         let currentStudentResult = null;
 
-        // 1. جلب الامتحانات التي تحتوي على مقالي فقط
         database.ref('exams').on('value', snapshot => {
             const select = document.getElementById('examSelect');
             select.innerHTML = '<option value="" disabled selected>-- اختر الامتحان --</option>';
@@ -189,16 +184,13 @@
             }
         });
 
-        // 2. جلب الطلاب لتسهيل جلب الأسماء
         database.ref('students').on('value', snapshot => {
             allStudents = snapshot.val() || {};
-            // لو كان فيه امتحان مختار، نحدث القائمة
             if(document.getElementById('examSelect').value) {
                 loadPendingStudents();
             }
         });
 
-        // 3. عرض الطلاب الذين ينتظرون التصحيح للامتحان المحدد
         function loadPendingStudents() {
             const examId = document.getElementById('examSelect').value;
             if (!examId) return;
@@ -211,7 +203,6 @@
                 const student = allStudents[phone];
                 if (student.results && student.results[examId]) {
                     const result = student.results[examId];
-                    // نعرض فقط الطلاب اللي حالتهم pending_review
                     if (result.status === "pending_review") {
                         pendingCount++;
                         container.innerHTML += `
@@ -219,7 +210,7 @@
                                 <div class="student-info">
                                     <h4>👨‍🎓 ${student.name}</h4>
                                     <p>📱 الهاتف: ${phone}</p>
-                                    <p>🎯 درجة الموضوعي: <strong style="color:var(--success);">${result.score}</strong> من ${result.total}</p>
+                                    <p>🎯 المحصل من الموضوعي (تلقائي): <strong style="color:var(--success);">${result.score}</strong> درجة</p>
                                     <p>📅 تاريخ الحل: <span style="direction:ltr; display:inline-block;">${result.dateTaken}</span></p>
                                 </div>
                                 <button class="mark-btn" onclick="openGradingModal('${phone}', '${examId}')">✍️ بدء التصحيح</button>
@@ -234,14 +225,12 @@
             }
         }
 
-        // 4. فتح شاشة التصحيح لطالب معين
         function openGradingModal(phone, examId) {
             currentGradingStudentPhone = phone;
             currentGradingExamId = examId;
             const student = allStudents[phone];
             currentStudentResult = student.results[examId];
             
-            // جلب أسئلة الامتحان من الكاش
             currentExamQuestions = Array.isArray(allExams[examId].questions) ? allExams[examId].questions : Object.values(allExams[examId].questions);
 
             document.getElementById('modalStudentName').innerText = `تصحيح ورقة الطالب: ${student.name}`;
@@ -258,7 +247,7 @@
 
                     container.innerHTML += `
                         <div class="essay-box" data-qindex="${index}" data-maxscore="${q.points}">
-                            <h5><span style="color:var(--primary); font-weight:800;">س${essayIndexCount}:</span> ${q.questionText} <span style="color:var(--danger); font-size:13px;">(${q.points} درجات)</span></h5>
+                            <h5><span style="color:var(--primary); font-weight:800;">س${essayIndexCount}:</span> ${q.questionText} <span style="color:var(--danger); font-size:13px;">(الدرجة القصوى: ${q.points})</span></h5>
                             
                             ${modelAnswerHTML}
 
@@ -270,7 +259,9 @@
                             <div class="grading-controls">
                                 <div>
                                     <label style="font-size:13px; font-weight:bold; color:var(--dark-text);">درجة الطالب:</label>
-                                    <input type="number" class="score-input" min="0" max="${q.points}" placeholder="من ${q.points}" required>
+                                    <input type="number" class="score-input" min="0" max="${q.points}" 
+                                        oninput="if(parseInt(this.value) > ${q.points}) { this.value = ${q.points}; } else if(parseInt(this.value) < 0) { this.value = 0; }" 
+                                        placeholder="الدرجة من ${q.points}" required>
                                 </div>
                                 <div>
                                     <label style="font-size:13px; font-weight:bold; color:var(--dark-text);">تعليق للمراجعة (يظهر للطالب):</label>
@@ -284,7 +275,7 @@
             });
 
             document.getElementById('gradingModal').style.display = 'block';
-            document.body.style.overflow = 'hidden'; // منع التمرير في الخلفية
+            document.body.style.overflow = 'hidden'; 
         }
 
         function closeModal() {
@@ -292,7 +283,7 @@
             document.body.style.overflow = 'auto';
         }
 
-        // 5. حفظ الدرجات والتعليقات واعتماد النتيجة
+        // 5. حفظ الدرجات (بنظام الحماية الصارم)
         function saveGrades() {
             const btn = document.getElementById('saveGradesBtn');
             const essayBoxes = document.querySelectorAll('.essay-box');
@@ -300,47 +291,66 @@
             let totalEssayScore = 0;
             let teacherFeedbackObj = currentStudentResult.teacherFeedback || {};
             let isValid = true;
+            let errorMessage = "";
 
-            essayBoxes.forEach(box => {
+            for (let box of essayBoxes) {
                 const qIndex = box.getAttribute('data-qindex');
                 const maxScore = parseInt(box.getAttribute('data-maxscore'));
-                const scoreInput = box.querySelector('.score-input').value;
+                const scoreInputEl = box.querySelector('.score-input');
+                const scoreInput = scoreInputEl.value;
                 const commentInput = box.querySelector('.comment-input').value;
 
+                scoreInputEl.style.borderColor = "var(--border-color)"; // تصفير لون الإطار
+
+                // التحقق من الحقول الفارغة
                 if (scoreInput === "") {
                     isValid = false;
-                    box.querySelector('.score-input').style.borderColor = "var(--danger)";
-                } else {
-                    box.querySelector('.score-input').style.borderColor = "var(--border-color)";
-                    let givenScore = parseInt(scoreInput);
-                    if(givenScore > maxScore) givenScore = maxScore;
-                    if(givenScore < 0) givenScore = 0;
-
-                    totalEssayScore += givenScore;
-                    
-                    // حفظ التعليق والدرجة لهذا السؤال المخصوص
-                    teacherFeedbackObj[qIndex] = {
-                        awardedPoints: givenScore,
-                        comment: commentInput
-                    };
+                    errorMessage = "⚠️ يرجى إدخال درجة لجميع الأسئلة المقالية!";
+                    scoreInputEl.style.borderColor = "var(--danger)";
+                    break;
                 }
-            });
 
-            if (!isValid) return alert("⚠️ يرجى إدخال درجة لكل سؤال مقالي!");
+                let givenScore = parseInt(scoreInput);
+
+                // جدار الحماية النهائي للدرجات المرتفعة أو السالبة
+                if (givenScore > maxScore) {
+                    isValid = false;
+                    errorMessage = `⚠️ خطأ: لا يمكن إعطاء الطالب (${givenScore}) في سؤال أقصى درجة له هي (${maxScore}) فقط!`;
+                    scoreInputEl.style.borderColor = "var(--danger)";
+                    break;
+                }
+                
+                if (givenScore < 0) {
+                    isValid = false;
+                    errorMessage = "⚠️ لا يمكن إعطاء درجة أقل من الصفر!";
+                    scoreInputEl.style.borderColor = "var(--danger)";
+                    break;
+                }
+
+                totalEssayScore += givenScore;
+                
+                teacherFeedbackObj[qIndex] = {
+                    awardedPoints: givenScore,
+                    comment: commentInput
+                };
+            }
+
+            // إذا كان هناك أي خطأ، نوقف عملية الحفظ ونعرض الرسالة
+            if (!isValid) {
+                alert(errorMessage);
+                return;
+            }
 
             btn.innerText = "⏳ جاري الاعتماد...";
             btn.disabled = true;
 
-            // حساب المجموع النهائي (الدرجة الموضوعية السابقة + درجة المقالي الحالية)
+            // حساب المجموع النهائي (الدرجة الموضوعية السابقة التي حسبها النظام + درجة المقالي الحالية)
             const finalTotalScore = currentStudentResult.score + totalEssayScore;
 
             const updates = {};
-            // تحديث حالة الطالب وإضافة الدرجة والتعليقات
             updates[`students/${currentGradingStudentPhone}/results/${currentGradingExamId}/score`] = finalTotalScore;
             updates[`students/${currentGradingStudentPhone}/results/${currentGradingExamId}/status`] = "graded";
             updates[`students/${currentGradingStudentPhone}/results/${currentGradingExamId}/teacherFeedback`] = teacherFeedbackObj;
-            
-            // تحديث النتيجة في أرشيف الامتحان نفسه
             updates[`exams/${currentGradingExamId}/results/${currentGradingStudentPhone}`] = finalTotalScore;
 
             database.ref().update(updates).then(() => {
@@ -348,7 +358,6 @@
                 closeModal();
                 btn.innerText = "✅ اعتماد الدرجة النهائية";
                 btn.disabled = false;
-                // القائمة هتتحدث أوتوماتيك عشان احنا مستخدمين on('value')
             }).catch(error => {
                 alert("❌ حدث خطأ أثناء رفع الدرجات، تأكد من اتصالك بالإنترنت.");
                 btn.innerText = "✅ اعتماد الدرجة النهائية";
