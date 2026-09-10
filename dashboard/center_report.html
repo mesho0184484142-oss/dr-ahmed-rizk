@@ -331,12 +331,17 @@
             let absentList = [];
 
             // خوارزمية الفلترة
+           // خوارزمية الفلترة
             for (let phone in allStudents) {
                 const student = allStudents[phone];
                 let isEligible = false;
 
-                if (student.university === selectedExam.university) {
-                    if (student.university === 'baccalaureate' || student.university === 'bachelor') {
+                // توحيد المسميات لتجنب التعارض بين bachelor و baccalaureate
+                let studentUni = (student.university === 'baccalaureate') ? 'bachelor' : student.university;
+                let examUni = (selectedExam.university === 'baccalaureate') ? 'bachelor' : selectedExam.university;
+
+                if (studentUni === examUni) {
+                    if (studentUni === 'bachelor') {
                         if (selectedExam.center === 'all' || selectedExam.center === student.center) {
                             isEligible = true;
                         }
@@ -352,7 +357,7 @@
                     const result = studentResults[examId];
 
                     let studentStageText = uniTranslations[student.university] || student.university;
-                    if(student.university === 'baccalaureate' || student.university === 'bachelor') {
+                    if(studentUni === 'bachelor') {
                         studentStageText += `<span class="student-meta">السنتر: ${student.center}</span>`;
                     } else {
                         studentStageText += `<span class="student-meta">الفرقة: ${gradeTranslations[student.grade] || student.grade}</span>`;
@@ -375,51 +380,58 @@
             // ترتيب الحاضرين
             attendedList.sort((a, b) => b.score - a.score);
 
-            // رسم الجداول
-            if (attendedList.length === 0) {
-                attendedBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--secondary);">لا يوجد طلاب أدوا هذا الامتحان حتى الآن.</td></tr>';
+            // رسم الجداول بمعالجة الحالة الصفرية
+            if (attendedList.length === 0 && absentList.length === 0) {
+                // حالة عدم وجود أي طلاب مسجلين في هذه الفئة
+                attendedBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--danger); font-weight: 800;">⚠️ لا يوجد أي طلاب مسجلين في قاعدة البيانات يطابقون بيانات هذا الامتحان (نفس المرحلة/السنتر).</td></tr>';
+                absentBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--secondary);">لا توجد بيانات للعرض.</td></tr>';
             } else {
-                attendedList.forEach((st, index) => {
-                    const percentage = (st.score / st.total) * 100;
-                    const badgeClass = percentage >= 50 ? 'score-pass' : 'score-fail';
-                    const rankIcon = index === 0 ? '🥇' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : '🔹'));
+                // رسم جدول الحاضرين
+                if (attendedList.length === 0) {
+                    attendedBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--secondary);">لا يوجد طلاب أدوا هذا الامتحان حتى الآن.</td></tr>';
+                } else {
+                    attendedList.forEach((st, index) => {
+                        const percentage = (st.score / st.total) * 100;
+                        const badgeClass = percentage >= 50 ? 'score-pass' : 'score-fail';
+                        const rankIcon = index === 0 ? '🥇' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : '🔹'));
 
-                    attendedBody.innerHTML += `
-                        <tr>
-                            <td><strong style="color: var(--primary); font-size: 1.1rem;">${rankIcon} ${index + 1}</strong></td>
-                            <td><strong>${st.name}</strong></td>
-                            <td style="font-family: monospace; font-size: 1.05rem;">${st.phone}</td>
-                            <td>${st.stageHtml}</td>
-                            <td><span class="score-badge ${badgeClass}">${st.score} / ${st.total} (${percentage.toFixed(1)}%)</span></td>
-                        </tr>
-                    `;
-                });
-            }
+                        attendedBody.innerHTML += `
+                            <tr>
+                                <td><strong style="color: var(--primary); font-size: 1.1rem;">${rankIcon} ${index + 1}</strong></td>
+                                <td><strong>${st.name}</strong></td>
+                                <td style="font-family: monospace; font-size: 1.05rem;">${st.phone}</td>
+                                <td>${st.stageHtml}</td>
+                                <td><span class="score-badge ${badgeClass}">${st.score} / ${st.total} (${percentage.toFixed(1)}%)</span></td>
+                            </tr>
+                        `;
+                    });
+                }
 
-            if (absentList.length === 0) {
-                absentBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--success); font-weight:800; padding: 40px;">نسبة الحضور 100%! الجميع أدى الامتحان 🎉</td></tr>';
-            } else {
-                absentList.forEach(st => {
-                    const platformName = localStorage.getItem('platformName') || "المنصة التعليمية";
-                    const msg = `السيد ولي أمر الطالب (${st.name})، يرجى العلم أن نجلكم تخلف عن أداء امتحان (${selectedExam.name}) على ${platformName}. نرجو متابعة مستوى الطالب.`;
-                    const waLink = `https://wa.me/2${st.parentPhone}?text=${encodeURIComponent(msg)}`;
+                // رسم جدول الغائبين
+                if (absentList.length === 0) {
+                    absentBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--success); font-weight:800; padding: 40px;">نسبة الحضور 100%! الجميع أدى الامتحان 🎉</td></tr>';
+                } else {
+                    absentList.forEach(st => {
+                        const platformName = localStorage.getItem('platformName') || "المنصة التعليمية";
+                        const msg = `السيد ولي أمر الطالب (${st.name})، يرجى العلم أن نجلكم تخلف عن أداء امتحان (${selectedExam.name}) على ${platformName}. نرجو متابعة مستوى الطالب.`;
+                        const waLink = `https://wa.me/2${st.parentPhone}?text=${encodeURIComponent(msg)}`;
 
-                    absentBody.innerHTML += `
-                        <tr>
-                            <td><strong>${st.name}</strong></td>
-                            <td style="font-family: monospace; font-size: 1.05rem;">${st.phone}</td>
-                            <td>${st.stageHtml}</td>
-                            <td style="font-family: monospace; font-size: 1.05rem;">${st.parentPhone}</td>
-                            <td class="action-column">
-                                <a href="${waLink}" target="_blank" class="whatsapp-btn">💬 إنذار واتساب</a>
-                            </td>
-                        </tr>
-                    `;
-                });
+                        absentBody.innerHTML += `
+                            <tr>
+                                <td><strong>${st.name}</strong></td>
+                                <td style="font-family: monospace; font-size: 1.05rem;">${st.phone}</td>
+                                <td>${st.stageHtml}</td>
+                                <td style="font-family: monospace; font-size: 1.05rem;">${st.parentPhone}</td>
+                                <td class="action-column">
+                                    <a href="${waLink}" target="_blank" class="whatsapp-btn">💬 إنذار واتساب</a>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
             }
 
             document.getElementById('reportSection').style.display = 'block';
-            // النزول التلقائي للتقرير
             document.getElementById('reportSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     </script>
