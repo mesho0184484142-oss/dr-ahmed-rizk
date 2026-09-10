@@ -221,6 +221,7 @@
                                 <th>رقم الهاتف</th>
                                 <th>بيانات المرحلة</th>
                                 <th>الدرجة المحصلة</th>
+                                <th class="action-column">إجراء الإدارة</th>
                             </tr>
                         </thead>
                         <tbody id="attendedTableBody"></tbody>
@@ -331,7 +332,6 @@
             let absentList = [];
 
             // خوارزمية الفلترة
-           // خوارزمية الفلترة
             for (let phone in allStudents) {
                 const student = allStudents[phone];
                 let isEligible = false;
@@ -366,7 +366,8 @@
                     if (result !== undefined) {
                         attendedList.push({
                             name: student.name, phone: phone, stageHtml: studentStageText,
-                            score: result.score || 0, total: result.total || maxScore
+                            score: result.score || 0, total: result.total || maxScore,
+                            parentPhone: student.parentPhone || "غير مسجل" // جلب رقم ولي الأمر
                         });
                     } else {
                         absentList.push({
@@ -382,18 +383,32 @@
 
             // رسم الجداول بمعالجة الحالة الصفرية
             if (attendedList.length === 0 && absentList.length === 0) {
-                // حالة عدم وجود أي طلاب مسجلين في هذه الفئة
-                attendedBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--danger); font-weight: 800;">⚠️ لا يوجد أي طلاب مسجلين في قاعدة البيانات يطابقون بيانات هذا الامتحان (نفس المرحلة/السنتر).</td></tr>';
+                // دمج الأعمدة الممتدة لـ 6 عشان تناسب التعديل
+                attendedBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--danger); font-weight: 800;">⚠️ لا يوجد أي طلاب مسجلين في قاعدة البيانات يطابقون بيانات هذا الامتحان (نفس المرحلة/السنتر).</td></tr>';
                 absentBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--secondary);">لا توجد بيانات للعرض.</td></tr>';
             } else {
                 // رسم جدول الحاضرين
                 if (attendedList.length === 0) {
-                    attendedBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--secondary);">لا يوجد طلاب أدوا هذا الامتحان حتى الآن.</td></tr>';
+                    attendedBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--secondary);">لا يوجد طلاب أدوا هذا الامتحان حتى الآن.</td></tr>';
                 } else {
                     attendedList.forEach((st, index) => {
                         const percentage = (st.score / st.total) * 100;
                         const badgeClass = percentage >= 50 ? 'score-pass' : 'score-fail';
                         const rankIcon = index === 0 ? '🥇' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : '🔹'));
+
+                        // رسالة الواتساب وتجهيز الزرار
+                        const platformName = localStorage.getItem('platformName') || "المنصة التعليمية";
+                        const passStatus = percentage >= 50 ? 'ونجح في الاختبار بتفوق ' : 'ونرجو متابعة مستواه لتحقيق الأفضل ';
+                        const msg = `السيد ولي أمر الطالب/ة (${st.name})،\nيرجى العلم أن نجلكم أدى امتحان (${selectedExam.name}) على ${platformName} وحصل على درجة (${st.score} من ${st.total}).\nالنسبة: ${percentage.toFixed(1)}%\n${passStatus}`;
+                        const waLink = `https://wa.me/2${st.parentPhone}?text=${encodeURIComponent(msg)}`;
+
+                        let waButton = '';
+                        // التأكد من وجود رقم ولي أمر صالح
+                        if (st.parentPhone && st.parentPhone !== "غير مسجل" && st.parentPhone.length >= 10) {
+                            waButton = `<a href="${waLink}" target="_blank" class="whatsapp-btn" style="background: var(--primary);">💬 إرسال الدرجة</a>`;
+                        } else {
+                            waButton = `<span style="color: var(--secondary); font-size: 0.85rem; font-weight:700;">الرقم غير مسجل</span>`;
+                        }
 
                         attendedBody.innerHTML += `
                             <tr>
@@ -402,6 +417,7 @@
                                 <td style="font-family: monospace; font-size: 1.05rem;">${st.phone}</td>
                                 <td>${st.stageHtml}</td>
                                 <td><span class="score-badge ${badgeClass}">${st.score} / ${st.total} (${percentage.toFixed(1)}%)</span></td>
+                                <td class="action-column">${waButton}</td>
                             </tr>
                         `;
                     });
@@ -423,7 +439,7 @@
                                 <td>${st.stageHtml}</td>
                                 <td style="font-family: monospace; font-size: 1.05rem;">${st.parentPhone}</td>
                                 <td class="action-column">
-                                    <a href="${waLink}" target="_blank" class="whatsapp-btn">💬 إنذار واتساب</a>
+                                    <a href="${waLink}" target="_blank" class="whatsapp-btn">💬 إنذار غياب</a>
                                 </td>
                             </tr>
                         `;
