@@ -71,13 +71,13 @@
         
         .doctor-profile { display: flex; align-items: center; gap: 20px; }
        .doctor-profile img {
-            width: 120px; /* تكبير الحجم من 80 إلى 120 بيكسل */
-            height: 120px; 
+            width: 150px; /* كبرنا الحجم لـ 150 */
+            height: 150px; 
             border-radius: 50%; 
-            border: 3px solid var(--primary); /* تصغير سُمك الإطار شوية عشان ماياكلش من الصورة */
-            object-fit: contain; /* دي هتخلي الصورة كاملة تظهر بدون ما تتقص */
-            background-color: #ffffff; /* خلفية بيضاء عشان تبرز الصورة */
-            padding: 5px; /* مسافة بسيطة بين الصورة والإطار بتدي شكل فخم */
+            border: 3px solid var(--primary);
+            object-fit: contain; 
+            background-color: #ffffff; 
+            padding: 5px; 
             box-shadow: 0 8px 20px rgba(67, 24, 255, 0.15);
         }
         .doctor-info h3 { margin: 0 0 5px 0; color: var(--primary); font-size: 1.5rem; font-weight: 900; }
@@ -187,7 +187,7 @@
             /* كارت الدكتور */
             .doctor-header { flex-direction: column; gap: 15px; padding: 20px 15px; text-align: center; }
             .doctor-profile { flex-direction: column; gap: 10px; }
-            .doctor-profile img { width: 100px; height: 100px; }
+            .doctor-profile img { width: 130px; height: 130px; } /* كبرناها في الموبايل */
             .doctor-info h3 { font-size: 1.3rem; }
             .platform-badge { width: 100%; justify-content: center; font-size: 0.9rem; padding: 12px; }
             
@@ -322,20 +322,19 @@
             });
         }
 
-      function loadExams() {
+    function loadExams() {
             const availableContainer = document.getElementById('availableExamsContainer');
-            const completedContainer = document.getElementById('completedExamsContainer');
             
             database.ref(`students/${currentPhone}/results`).once('value').then(resultsSnapshot => {
                 const studentResults = resultsSnapshot.val() || {};
                 const completedExamIds = Object.keys(studentResults); 
 
                 database.ref('exams').on('value', examsSnapshot => {
-                    availableContainer.innerHTML = ''; completedContainer.innerHTML = '';
+                    availableContainer.innerHTML = '';
                     
                     if (examsSnapshot.exists()) {
                         const exams = examsSnapshot.val();
-                        let hasAvailable = false, hasCompleted = false;
+                        let hasAvailable = false;
 
                         for (let examId in exams) {
                             const exam = exams[examId];
@@ -363,27 +362,8 @@
 
                             if (isEligible) {
                                 if (completedExamIds.includes(examId)) {
-                                    hasCompleted = true;
-                                    const res = studentResults[examId];
-                                    
-                                    let statusContent = '';
-                                    if(res.status === "pending_review") {
-                                        statusContent = `<div class="pending-badge">⏳ ورقتك قيد المراجعة اليدوية من قبل المعلم.</div>`;
-                                    } else {
-                                        statusContent = `
-                                            <div class="exam-details">
-                                                <p>الدرجة المعتمدة: <strong>${res.score} / ${res.total}</strong></p>
-                                                <p>تاريخ الانتهاء: <strong>${res.dateTaken.split(',')[0]}</strong></p>
-                                            </div>
-                                            <button class="action-btn download-btn" onclick="downloadExamReport('${examId}')">📥 تحميل تقرير الإجابات (PDF)</button>
-                                        `;
-                                    }
-
-                                    completedContainer.innerHTML += `
-                                        <div class="exam-card completed">
-                                            <h4>✅ ${exam.name}</h4>
-                                            ${statusContent}
-                                        </div>`;
+                                    // لو الطالب امتحنه خلاص، بنتجاهله ومش بنعرضه هنا
+                                    continue;
                                 } else {
                                     hasAvailable = true;
                                     availableContainer.innerHTML += `
@@ -399,13 +379,15 @@
                                 }
                             }
                         }
-                        if (!hasAvailable) availableContainer.innerHTML = '<p style="color: var(--dark-text); font-weight: 700; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px dashed var(--border-color); grid-column: 1/-1;">لا توجد امتحانات جديدة متاحة لك حالياً. استعد للامتحانات القادمة!</p>';
-                        if (!hasCompleted) completedContainer.innerHTML = '<p style="color: var(--dark-text); font-weight: 700; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px dashed var(--border-color); grid-column: 1/-1;">لم تقم بإنجاز أي امتحانات حتى الآن. سجلك فارغ.</p>';
+                        if (!hasAvailable) {
+                            availableContainer.innerHTML = '<p style="color: var(--dark-text); font-weight: 700; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px dashed var(--border-color); grid-column: 1/-1; text-align: center;">لا توجد امتحانات جديدة متاحة لك حالياً. استعد للامتحانات القادمة!</p>';
+                        }
+                    } else {
+                        availableContainer.innerHTML = '<p style="color: var(--dark-text); font-weight: 700; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px dashed var(--border-color); grid-column: 1/-1; text-align: center;">لا توجد امتحانات مسجلة حالياً.</p>';
                     }
                 });
             });
         }
-        
         function goToExam(examId) { window.location.href = `take_exam.html?id=${examId}`; }
         function logoutUser() { localStorage.removeItem('currentLoggedInStudent'); window.location.href = "../auth/login.html"; }
         
