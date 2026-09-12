@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إعدادات المنصة والمظهر - د. أحمد رزق</title>
+    <!-- استدعاء الخطوط وتنسيقات لوحة التحكم الأساسية -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    
+    <style>
+        .settings-card { 
+            background: var(--card-bg); 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); 
+            max-width: 600px; 
+            margin: 0 auto; 
+            border: 1px solid var(--border-color);
+        }
+        
+        .setting-group { margin-bottom: 30px; }
+        
+        .setting-group label { 
+            display: block; 
+            font-weight: 800; 
+            margin-bottom: 15px; 
+            color: var(--dark-text); 
+            font-size: 16px;
+        }
+        
+        .setting-input { 
+            width: 100%; 
+            padding: 15px; 
+            border: 2px solid var(--border-color); 
+            border-radius: 12px; 
+            font-size: 16px; 
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            background: var(--bg-light);
+            color: var(--dark-text);
+            outline: none;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+        .setting-input:focus {
+            border-color: var(--primary);
+            background: var(--card-bg);
+            box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1);
+        }
+        
+        /* شكل اختيار اللون */
+        .color-picker-container { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        input[type="color"] { 
+            border: none; 
+            width: 45px; 
+            height: 45px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            padding: 0; 
+            background: none; 
+        }
+        
+        /* زر التبديل (Toggle Switch) */
+        .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--secondary); transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        .save-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 18px;
+            font-family: 'Cairo', sans-serif;
+            width: 100%;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 10px 20px rgba(5, 205, 153, 0.2);
+            margin-top: 20px;
+        }
+        .save-btn:hover {
+            background: #04b082;
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px rgba(5, 205, 153, 0.3);
+        }
+
+        /* دعم الوضع الداكن للوحة التحكم الحالية برمجياً */
+        body.dark-mode {
+            --bg-light: #0b1437;
+            --card-bg: #111c44;
+            --dark-text: #ffffff;
+            --border-color: #1a2552;
+            --secondary: #8f9bba;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- القائمة الجانبية -->
+    <div class="sidebar">
+        <h3 id="sidebarTitle">👨‍🏫 منصة د. أحمد رزق</h3>
+        <ul>
+            <li><a href="index.html">🏠 الرئيسية والإحصائيات</a></li>
+            <li><a href="add_exam.html">📝 رفع امتحان جديد</a></li>
+            <li><a href="center_report.html">📊 تقارير السناتر التفصيلية</a></li>
+            <li><a href="manage_students.html">👥 إدارة الطلاب</a></li>
+            <li><a href="settings.html" class="active">⚙️ إعدادات المنصة والمظهر</a></li>
+            <li><a href="../auth/login.html">🚪 تسجيل الخروج</a></li>
+        </ul>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-content">
+        <h2>⚙️ تخصيص إعدادات المنصة</h2>
+        
+        <div class="settings-card">
+            
+            <!-- تغيير اسم المنصة -->
+            <div class="setting-group">
+                <label>اسم المنصة (يظهر للطلاب في كل مكان):</label>
+                <input type="text" class="setting-input" id="platformNameInput" placeholder="مثال: منصة د. أحمد رزق">
+            </div>
+
+            <!-- تغيير اللون الأساسي -->
+            <div class="setting-group">
+                <label>اللون الأساسي للمنصة (الأزرار والروابط):</label>
+                <div class="color-picker-container">
+                    <input type="color" id="primaryColorInput" value="#4318FF">
+                    <span id="colorHexCode" style="font-family: monospace; font-size: 18px; font-weight: 800; color: var(--dark-text);">#4318FF</span>
+                </div>
+            </div>
+
+            <!-- تفعيل الوضع الداكن -->
+            <div class="setting-group" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-light); padding: 15px 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <label style="margin: 0; font-size: 18px;">🌙 تفعيل الوضع الداكن (Dark Mode):</label>
+                <label class="switch">
+                    <input type="checkbox" id="darkModeToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <button class="save-btn" onclick="saveSettings()">💾 حفظ وتطبيق الإعدادات</button>
+        </div>
+    </div>
+
+    <script>
+        // 1. تحميل الإعدادات المحفوظة مسبقاً
+        window.onload = function() {
+            const savedName = localStorage.getItem('platformName') || "منصة د. أحمد رزق";
+            const savedColor = localStorage.getItem('primaryColor') || "#4318FF";
+            const savedMode = localStorage.getItem('themeMode');
+
+            document.getElementById('platformNameInput').value = savedName;
+            document.getElementById('sidebarTitle').innerText = `👨‍🏫 ${savedName}`;
+            
+            document.getElementById('primaryColorInput').value = savedColor;
+            document.getElementById('colorHexCode').innerText = savedColor;
+            document.documentElement.style.setProperty('--primary', savedColor); // تطبيق مبدئي
+            
+            if (savedMode === 'dark') {
+                document.getElementById('darkModeToggle').checked = true;
+                document.body.classList.add('dark-mode');
+            }
+        };
+
+        // تحديث كود اللون واللون الفعلي للمنصة لحظياً أثناء الاختيار
+        document.getElementById('primaryColorInput').addEventListener('input', function() {
+            document.getElementById('colorHexCode').innerText = this.value;
+            document.documentElement.style.setProperty('--primary', this.value);
+        });
+
+        // 2. دالة حفظ الإعدادات
+        function saveSettings() {
+            const newName = document.getElementById('platformNameInput').value.trim();
+            const newColor = document.getElementById('primaryColorInput').value;
+            const isDark = document.getElementById('darkModeToggle').checked;
+
+            // حفظ في الذاكرة المحلية (تؤثر على صفحة الهوم بيج للطلاب)
+            if (newName) localStorage.setItem('platformName', newName);
+            localStorage.setItem('primaryColor', newColor);
+            localStorage.setItem('themeMode', isDark ? 'dark' : 'light');
+
+            // تطبيق التغييرات فوراً على هذه الصفحة
+            document.getElementById('sidebarTitle').innerText = `👨‍🏫 ${newName}`;
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+
+            alert("✅ تم حفظ الإعدادات بنجاح! سيشاهد الطلاب هذه التعديلات فور دخولهم.");
+        }
+    </script>
+</body>
+</html>
