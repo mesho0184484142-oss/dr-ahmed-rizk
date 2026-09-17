@@ -388,11 +388,16 @@
         }
 
       // دالة الطباعة الملونة
+// دالة الطباعة الملونة مع اللوجو والعلامة المائية
         function printExam(examId) {
             const exam = allExams[examId];
             if (!exam) return;
 
             const printWindow = window.open('', '_blank');
+            
+            // مسار اللوجو (تأكد إنه مطابق لمسار اللوجو في مشروعك)
+            const logoPath = '../images/logo.png'; 
+
             let html = `
                 <html lang="ar" dir="rtl">
                 <head>
@@ -401,7 +406,7 @@
                     <style>
                         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
                         
-                        /* إجبار المتصفح على طباعة الألوان */
+                        /* إجبار المتصفح على طباعة الألوان والصور الخلفية */
                         * {
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
@@ -422,6 +427,26 @@
                             direction: rtl; 
                             max-width: 800px; 
                             margin: auto; 
+                            position: relative; /* ضروري عشان العلامة المائية */
+                            min-height: 100vh;
+                        }
+
+                        /* 💧 كود العلامة المائية */
+                        body::before {
+                            content: "";
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            width: 60%;
+                            height: 60%;
+                            background-image: url('${logoPath}');
+                            background-size: contain;
+                            background-repeat: no-repeat;
+                            background-position: center;
+                            opacity: 0.08; /* درجة الشفافية: 8% عشان متغبش على النص */
+                            z-index: -1;
+                            pointer-events: none;
                         }
 
                         .header { 
@@ -429,6 +454,13 @@
                             border-bottom: 3px solid var(--primary); 
                             padding-bottom: 20px; 
                             margin-bottom: 35px; 
+                        }
+                        
+                        /* 🖼️ تصميم اللوجو في الهيدر */
+                        .header-logo {
+                            width: 90px;
+                            height: auto;
+                            margin-bottom: 15px;
                         }
                         
                         .header h1 { 
@@ -452,7 +484,7 @@
                         .question-block { 
                             margin-bottom: 35px; 
                             page-break-inside: avoid; 
-                            background: #fff;
+                            background: transparent;
                         }
 
                         .question-title { 
@@ -499,7 +531,7 @@
 
                         .essay-space { 
                             border: 2px dashed var(--secondary); 
-                            background: var(--bg-light);
+                            background: rgba(244, 247, 254, 0.7); /* خلفية شفافة شوية */
                             border-radius: 15px; 
                             height: 150px; 
                             margin-top: 15px; 
@@ -512,6 +544,9 @@
                 </head>
                 <body>
                     <div class="header">
+                        <!-- اللوجو هنا -->
+                        <img src="${logoPath}" alt="لوجو المنصة" class="header-logo" onerror="this.style.display='none'">
+                        
                         <h1>${exam.name}</h1>
                         <div class="header-info">
                             مدة الامتحان: ${exam.duration} دقيقة &nbsp;&nbsp;|&nbsp;&nbsp; الدرجة النهائية: ${exam.totalScore || exam.totalQuestions || '--'} درجة
@@ -545,9 +580,12 @@
                 html += `<p style="text-align: center; font-size: 20px; font-weight: bold; color: var(--secondary);">لا توجد أسئلة مسجلة في هذا الامتحان.</p>`;
             }
 
+            // تأخير أمر الطباعة ثانية واحدة عشان ندي فرصة للوجو يحمل
             html += `
                     <script>
-                        window.onload = function() { window.print(); }
+                        window.onload = function() { 
+                            setTimeout(() => { window.print(); }, 500);
+                        }
                     <\/script>
                 </body>
                 </html>
