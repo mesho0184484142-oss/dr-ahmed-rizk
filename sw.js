@@ -1,7 +1,7 @@
 self.addEventListener('install', (e) => {
-  console.log('[Service Worker] Install');
+  self.skipWaiting(); // لتحديث التطبيق فوراً عند وجود تغيير
 });
 
 self.addEventListener('fetch', (e) => {
-  // الحدث ده لازم يكون موجود عشان المتصفح يقبل تنزيل التطبيق
+  e.respondWith(fetch(e.request).catch(() => console.log('Offline mode not fully cached yet')));
 });
