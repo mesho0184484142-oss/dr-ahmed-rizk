@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>إدارة الطلاب - المنصة التعليمية</title>
+    
+    <!-- خطوط جوجل -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --primary: #1e293b;
+            --primary-hover: #0f172a;
+            --secondary: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark-text: #0f172a;
+            --bg-light: #f1f5f9;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --sidebar-width: 280px;
+        }
+
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background-color: var(--bg-light); 
+            color: var(--dark-text);
+            margin: 0; padding: 0; box-sizing: border-box;
+        }
+
+        /* هيكل لوحة التحكم المتجاوب */
+        .dashboard-layout { display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: var(--sidebar-width); background: var(--card-bg);
+            border-left: 1px solid var(--border-color); padding: 30px 20px;
+            position: fixed; height: 100vh; overflow-y: auto; transition: all 0.3s ease;
+            z-index: 1000; box-shadow: -5px 0 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar h3 { color: var(--primary); font-weight: 800; margin-bottom: 40px; text-align: center; font-size: 1.4rem; padding-bottom: 15px; border-bottom: 2px dashed var(--border-color);}
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar ul li { margin-bottom: 10px; }
+        .sidebar ul li a {
+            display: block; padding: 15px 20px; text-decoration: none;
+            color: var(--secondary); font-weight: 700; border-radius: 12px; transition: 0.3s;
+        }
+        .sidebar ul li a:hover, .sidebar ul li a.active { background: var(--primary); color: white; box-shadow: 0 10px 20px rgba(30, 41, 59, 0.2); transform: translateX(-5px);}
+
+        .main-content { flex: 1; margin-right: var(--sidebar-width); padding: 40px; }
+        
+        .page-header { margin-bottom: 30px; }
+        .page-title { font-size: 1.8rem; font-weight: 800; margin: 0; color: var(--dark-text); }
+
+        /* منطقة البحث والفلاتر */
+        .controls-card {
+            background: var(--card-bg); padding: 25px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid var(--border-color);
+            margin-bottom: 30px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center;
+        }
+
+        .search-container { flex: 2; position: relative; min-width: 250px; }
+        .filter-container { flex: 1; min-width: 200px; }
+
+        .search-box, .filter-box { 
+            width: 100%; padding: 15px 20px; border-radius: 12px; 
+            border: 1px solid var(--border-color); font-size: 0.95rem; 
+            font-family: 'Cairo', sans-serif; font-weight: 600; color: var(--dark-text);
+            background: var(--bg-light); outline: none; transition: all 0.3s ease; 
+            box-sizing: border-box;
+        }
+
+        .search-box { padding-right: 45px; }
+        .search-box:focus, .filter-box:focus { border-color: var(--primary); background: var(--card-bg); box-shadow: 0 0 0 4px rgba(30, 41, 59, 0.1); }
+
+        .search-icon {
+            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+            font-size: 1.1rem; color: var(--secondary); pointer-events: none;
+        }
+
+        /* تصميم الجدول المتجاوب */
+        .table-card {
+            background: var(--card-bg); border-radius: 20px; padding: 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .table-responsive {
+            width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; 
+        }
+
+        table { width: 100%; border-collapse: collapse; min-width: 900px; text-align: right; }
+        th, td { padding: 20px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; }
+        th { background: #f8fafc; color: var(--secondary); font-weight: 800; white-space: nowrap; border-bottom: 2px solid var(--border-color);}
+        tr:hover td { background: var(--bg-light); }
+        tr:last-child td { border-bottom: none; }
+
+        /* الشارات (Badges) */
+        .badge { padding: 6px 12px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; display: inline-block; white-space: nowrap;}
+        .badge-uni { background: rgba(30, 41, 59, 0.1); color: var(--primary); }
+        .badge-bac { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+
+        /* الأزرار داخل الجدول */
+        .action-btns-group { display: flex; gap: 10px; justify-content: flex-start; }
+
+        .btn-small {
+            padding: 8px 15px; border-radius: 10px; font-weight: 800; font-size: 0.85rem;
+            cursor: pointer; transition: 0.3s; border: none; font-family: 'Cairo'; display: inline-flex; align-items: center; gap: 5px;
+        }
+        
+        .pass-btn { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+        .pass-btn:hover { background: var(--warning); color: #fff; transform: translateY(-2px); box-shadow: 0 5px 10px rgba(245, 158, 11, 0.2);}
+        
+        .delete-btn { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .delete-btn:hover { background: var(--danger); color: white; transform: translateY(-2px); box-shadow: 0 5px 10px rgba(239, 68, 68, 0.2);}
+
+        /* التجاوب مع الموبايل */
+        @media (max-width: 992px) {
+            .dashboard-layout { flex-direction: column; }
+            .sidebar { 
+                width: 100%; height: auto; position: relative; border-left: none; 
+                padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); z-index: 10;
+            }
+            .sidebar h3 { margin-bottom: 20px; padding-bottom: 10px; }
+            .sidebar ul { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+            .sidebar ul li { margin-bottom: 0; }
+            .sidebar ul li a { padding: 10px 15px; font-size: 0.9rem; text-align: center; }
+            
+            .main-content { margin-right: 0; width: 100%; padding: 20px; }
+        }
+
+        @media (max-width: 768px) {
+            .controls-card { flex-direction: column; padding: 20px; gap: 15px;}
+            .search-container, .filter-container { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-layout">
+        <!-- القائمة الجانبية -->
+        <aside class="sidebar">
+            <h3>👨‍🏫 لوحة الإدارة</h3>
+            <ul>
+                <li><a href="index.html">🏠 الرئيسية للإحصائيات</a></li>
+                <li><a href="add_exam.html">📝 بناء امتحان جديد</a></li>
+                <li><a href="manage_exams.html">📂 إدارة الامتحانات</a></li>
+                <li><a href="center_report.html">📊 تقارير الدرجات</a></li>
+                <li><a href="manage_students.html" class="active">👥 إدارة الطلاب</a></li>
+                <li><a href="settings.html">⚙️ إعدادات المنصة</a></li>
+                <li><a href="../auth/login.html" style="color: var(--danger);">🚪 تسجيل الخروج</a></li>
+            </ul>
+        </aside>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content">
+            <div class="page-header">
+                <h2 class="page-title">👥 إدارة بيانات الطلاب</h2>
+            </div>
+            
+            <div class="controls-card">
+                <div class="search-container">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" class="search-box" placeholder="ابحث برقم الهاتف أو اسم الطالب..." oninput="filterStudents()">
+                </div>
+                
+                <div class="filter-container">
+                    <select id="stageFilter" class="filter-box" onchange="filterStudents()">
+                        <option value="all">كل المراحل الدراسية</option>
+                        <option value="alex_uni">جامعة الإسكندرية</option>
+                        <option value="damanhour_uni">جامعة دمنهور</option>
+                        <option value="bachelor">بكالوريا</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الاسم بالكامل</th>
+                                <th>رقم الهاتف (المعرف)</th>
+                                <th>المرحلة الدراسية</th>
+                                <th>السنتر التابع له</th>
+                                <th>إجراءات الإدارة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            <tr><td colspan="5" style="text-align:center; padding:50px; color:var(--secondary); font-weight:800; font-size: 1.1rem;">⏳ جاري تحميل بيانات الطلاب من الخادم...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2_IFn95PC962G1CFxEvugRD1ysZZaDqw",
+            authDomain: "dr-ahmed-rizk-platform.firebaseapp.com",
+            databaseURL: "https://dr-ahmed-rizk-platform-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dr-ahmed-rizk-platform"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let allStudents = {};
+
+        // قواميس الترجمة
+        const uniTranslations = {
+            'alex_uni': 'جامعة الإسكندرية',
+            'damanhour_uni': 'جامعة دمنهور',
+            'bachelor': 'بكالوريا',
+            'baccalaureate': 'بكالوريا'
+        };
+
+        const gradeTranslations = {
+            'year_1': 'الفرقة الأولى',
+            'year_2': 'الفرقة الثانية',
+            'year_3': 'الفرقة الثالثة',
+            'year_4': 'الفرقة الرابعة'
+        };
+
+        // جلب الطلاب لحظياً من السيرفر
+        database.ref('students').on('value', snapshot => {
+            allStudents = snapshot.val() || {};
+            filterStudents(); // تشغيل الفلترة بعد جلب البيانات
+        });
+
+        function filterStudents() {
+            const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+            const stageFilter = document.getElementById('stageFilter').value;
+            
+            const tbody = document.getElementById('studentsTableBody');
+            tbody.innerHTML = '';
+            
+            let hasResults = false;
+
+            for (let phone in allStudents) {
+                const st = allStudents[phone];
+                const studentName = (st.name || "").toLowerCase();
+                const studentUni = st.university || "none";
+                
+                // 1. فلترة المرحلة
+                let stageMatch = true;
+                if (stageFilter !== 'all') {
+                    if (stageFilter === 'bachelor' && (studentUni !== 'bachelor' && studentUni !== 'baccalaureate')) {
+                        stageMatch = false;
+                    } else if (stageFilter !== 'bachelor' && studentUni !== stageFilter) {
+                        stageMatch = false;
+                    }
+                }
+
+                // 2. فلترة البحث
+                let searchMatch = (studentName.includes(searchTerm) || phone.includes(searchTerm));
+
+                if (stageMatch && searchMatch) {
+                    hasResults = true;
+                    
+                    // تنسيق المرحلة
+                    let stageBadge = '';
+                    let centerDisplay = st.center || "غير محدد";
+
+                    if (studentUni === 'bachelor' || studentUni === 'baccalaureate') {
+                        stageBadge = `<span class="badge badge-bac">بكالوريا</span>`;
+                    } else if (studentUni === 'alex_uni' || studentUni === 'damanhour_uni') {
+                        let uniName = uniTranslations[studentUni];
+                        let gradeName = gradeTranslations[st.grade] || st.grade;
+                        stageBadge = `<span class="badge badge-uni">${uniName} - ${gradeName}</span>`;
+                        centerDisplay = `<span style="color:var(--secondary); font-weight:800;">--</span>`;
+                    } else {
+                        stageBadge = `<span class="badge" style="background:#e2e8f0; color:var(--secondary);">بيانات قديمة</span>`;
+                    }
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong style="color:var(--primary); font-size:1.05rem;">${st.name}</strong></td>
+                            <td style="color: var(--dark-text); font-weight: 800; font-family: monospace; font-size: 1rem;">${phone}</td>
+                            <td>${stageBadge}</td>
+                            <td><strong style="color:var(--dark-text);">${centerDisplay}</strong></td>
+                            <td>
+                                <div class="action-btns-group">
+                                    <button class="btn-small pass-btn" onclick="showPassword('${st.password}')">🔑 كشف الباسورد</button>
+                                    <button class="btn-small delete-btn" onclick="deleteStudent('${phone}', '${st.name}')">🗑️ حذف الحساب</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+
+            if (!hasResults) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:50px; color:var(--danger); font-weight:800; font-size: 1.1rem;">❌ لا توجد نتائج مطابقة لعملية البحث الحالية.</td></tr>`;
+            }
+        }
+
+        // دالة كشف الباسورد
+        function showPassword(pass) {
+            alert(`🔑 الرقم السري لفتح حساب الطالب هو:\n\n${pass}`);
+        }
+
+        // دالة حذف الطالب
+        function deleteStudent(phone, name) {
+            const confirmDelete = confirm(`⚠️ إجراء أمني لا رجعة فيه:\nهل أنت متأكد من مسح حساب الطالب (${name}) بشكل نهائي؟\nسيتم حذف جميع بياناته ودرجاته ولن يتمكن من الدخول للمنصة مرة أخرى.`);
+            
+            if (confirmDelete) {
+                database.ref('students/' + phone).remove()
+                .then(() => {
+                    alert("✅ تم حذف الطالب وبياناته من قاعدة البيانات بنجاح.");
+                })
+                .catch(err => {
+                    alert("❌ حدث خطأ أثناء الاتصال بالخادم لحذف الطالب.");
+                });
+            }
+        }
+    </script>
+</body>
+</html>

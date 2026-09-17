@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>إضافة الأسئلة - Nova Academy</title>
+    
+    <!-- خطوط جوجل -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --card-bg: #ffffff;
+            --bg-light: #f4f7fe;
+            --border-color: #e0e5f2;
+            --primary: #4318FF;
+            --primary-hover: #3311cc;
+            --secondary: #a3aed1;
+            --success: #05CD99;
+            --danger: #EE5D50;
+            --dark-text: #2b3674;
+            --info: #00b5ff;
+            --sidebar-width: 280px;
+        }
+
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background-color: var(--bg-light); 
+            color: var(--dark-text);
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* هيكل لوحة التحكم المتجاوب */
+        .dashboard-layout { display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: var(--sidebar-width); background: var(--card-bg);
+            border-left: 1px solid var(--border-color); padding: 20px;
+            position: fixed; height: 100vh; overflow-y: auto; transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .sidebar h3 { color: var(--primary); font-weight: 800; margin-bottom: 30px; text-align: center; font-size: 1.4rem;}
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar ul li { margin-bottom: 10px; }
+        .sidebar ul li a {
+            display: block; padding: 12px 15px; text-decoration: none;
+            color: var(--dark-text); font-weight: 700; border-radius: 12px; transition: 0.3s;
+        }
+        .sidebar ul li a:hover, .sidebar ul li a.active { background: var(--bg-light); color: var(--primary); font-weight: 800; }
+
+        .main-content {
+            flex: 1; margin-right: var(--sidebar-width); padding: 30px 40px;
+        }
+
+        h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 30px; color: var(--dark-text); }
+
+        /* كارت السؤال */
+        .question-block {
+            background: var(--card-bg); padding: 30px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 30px;
+            border: 1px solid var(--border-color); animation: fadeUp 0.4s ease-out;
+            position: relative;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-title { 
+            color: var(--primary); font-weight: 800; font-size: 1.3rem; 
+            margin-top: 0; margin-bottom: 20px; padding-bottom: 15px;
+            border-bottom: 2px dashed var(--bg-light); display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 10px; font-weight: 700; font-size: 1rem; }
+        
+        .question-text, .form-group input, .form-group select { 
+            width: 100%; padding: 15px; border: 2px solid var(--border-color); 
+            border-radius: 14px; font-family: 'Cairo'; font-size: 1rem; 
+            background: #fcfcfc; transition: 0.3s; box-sizing: border-box;
+            color: var(--dark-text); font-weight: 600; outline: none;
+        }
+        
+        .question-text { resize: vertical; min-height: 100px; }
+        .question-text:focus, .form-group input:focus, .form-group select:focus { 
+            border-color: var(--primary); background: var(--card-bg); box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.05);
+        }
+
+        /* شبكة الخيارات */
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px 20px; margin-bottom: 10px;}
+
+        /* أزرار التحكم */
+        .action-buttons { display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap; }
+        button {
+            padding: 16px 24px; border: none; border-radius: 14px; font-weight: 800;
+            font-family: 'Cairo'; font-size: 1.1rem; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        
+        .info-btn { background: var(--primary); color: white; box-shadow: 0 8px 16px rgba(67, 24, 255, 0.2); }
+        .info-btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
+        
+        .upload-btn { background: var(--success); color: white; box-shadow: 0 8px 16px rgba(5, 205, 153, 0.2); flex: 1; }
+        .upload-btn:hover { background: #04b082; transform: translateY(-2px); }
+
+        .delete-btn { 
+            background: rgba(238, 93, 80, 0.1); color: var(--danger); font-size: 0.95rem; 
+            padding: 10px 15px; border-radius: 10px; width: fit-content; margin-top: 15px;
+        }
+        .delete-btn:hover { background: var(--danger); color: white; }
+
+        /* التجاوب مع شاشات الموبايل */
+        @media (max-width: 992px) {
+            .dashboard-layout { flex-direction: column; }
+            .sidebar { 
+                width: 100%; height: auto; position: relative; border-left: none; 
+                border-bottom: 1px solid var(--border-color); padding: 15px; 
+            }
+            .sidebar ul { display: flex; overflow-x: auto; white-space: nowrap; gap: 10px; padding-bottom: 10px; }
+            .sidebar ul li { margin-bottom: 0; }
+            .main-content { margin-right: 0; padding: 20px; }
+        }
+
+        @media (max-width: 768px) {
+            .options-grid { grid-template-columns: 1fr; gap: 0; }
+            .action-buttons { flex-direction: column; }
+            button { width: 100%; }
+            .question-block { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-layout">
+        <!-- القائمة الجانبية -->
+        <aside class="sidebar">
+            <h3>👨‍🏫 منصة د. أحمد رزق</h3>
+            <ul>
+                <li><a href="index.html">🏠 الرئيسية والإحصائيات</a></li>
+                <li><a href="add_exam.html" class="active">📝 رفع امتحان جديد</a></li>
+                <li><a href="#">📚 رفع شيتات (PDF)</a></li>
+                <li><a href="#">📊 نتائج الطلاب</a></li>
+                <li><a href="../index.html" style="color: var(--danger);">🚪 خروج</a></li>
+            </ul>
+        </aside>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content">
+            <h2>إضافة أسئلة الامتحان</h2>
+            
+            <div id="questionsContainer">
+                <!-- بلوك السؤال الأول -->
+                <div class="question-block" id="question-1">
+                    <h3 class="question-title">
+                        <span>السؤال رقم 1</span>
+                    </h3>
+                    
+                    <div class="form-group">
+                        <label>نص السؤال:</label>
+                        <textarea class="question-text" placeholder="اكتب نص السؤال بوضوح هنا..." required></textarea>
+                    </div>
+
+                    <div class="options-grid">
+                        <div class="form-group">
+                            <label>الخيار (أ):</label>
+                            <input type="text" placeholder="اكتب الخيار الأول" required>
+                        </div>
+                        <div class="form-group">
+                            <label>الخيار (ب):</label>
+                            <input type="text" placeholder="اكتب الخيار الثاني" required>
+                        </div>
+                        <div class="form-group">
+                            <label>الخيار (ج):</label>
+                            <input type="text" placeholder="اكتب الخيار الثالث" required>
+                        </div>
+                        <div class="form-group">
+                            <label>الخيار (د):</label>
+                            <input type="text" placeholder="اكتب الخيار الرابع" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="color: var(--success);">الإجابة الصحيحة:</label>
+                        <select required>
+                            <option value="" disabled selected>-- اختر الإجابة الصحيحة --</option>
+                            <option value="a">الخيار (أ)</option>
+                            <option value="b">الخيار (ب)</option>
+                            <option value="c">الخيار (ج)</option>
+                            <option value="d">الخيار (د)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- أزرار التحكم -->
+            <div class="action-buttons">
+                <button type="button" class="info-btn" onclick="addNewQuestion()">➕ إضافة سؤال آخر</button>
+                <button type="button" class="upload-btn" onclick="saveExam()">💾 حفظ الامتحان ونشره 🚀</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let questionCount = 1;
+
+        function addNewQuestion() {
+            questionCount++;
+            const container = document.getElementById('questionsContainer');
+            
+            const newQuestion = document.createElement('div');
+            newQuestion.className = 'question-block';
+            newQuestion.id = `question-${questionCount}`;
+            
+            newQuestion.innerHTML = `
+                <h3 class="question-title">
+                    <span>السؤال رقم ${questionCount}</span>
+                    <button type="button" class="delete-btn" onclick="removeQuestion(${questionCount})">🗑️ حذف</button>
+                </h3>
+                
+                <div class="form-group">
+                    <label>نص السؤال:</label>
+                    <textarea class="question-text" placeholder="اكتب نص السؤال بوضوح هنا..." required></textarea>
+                </div>
+
+                <div class="options-grid">
+                    <div class="form-group">
+                        <label>الخيار (أ):</label>
+                        <input type="text" placeholder="اكتب الخيار الأول" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الخيار (ب):</label>
+                        <input type="text" placeholder="اكتب الخيار الثاني" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الخيار (ج):</label>
+                        <input type="text" placeholder="اكتب الخيار الثالث" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الخيار (د):</label>
+                        <input type="text" placeholder="اكتب الخيار الرابع" required>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="color: var(--success);">الإجابة الصحيحة:</label>
+                    <select required>
+                        <option value="" disabled selected>-- اختر الإجابة الصحيحة --</option>
+                        <option value="a">الخيار (أ)</option>
+                        <option value="b">الخيار (ب)</option>
+                        <option value="c">الخيار (ج)</option>
+                        <option value="d">الخيار (د)</option>
+                    </select>
+                </div>
+            `;
+            
+            container.appendChild(newQuestion);
+            // التمرير التلقائي للسؤال الجديد
+            newQuestion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function removeQuestion(id) {
+            const questionBlock = document.getElementById(`question-${id}`);
+            if (questionBlock) {
+                // تأثير حركي قبل الحذف
+                questionBlock.style.opacity = '0';
+                questionBlock.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    questionBlock.remove();
+                    updateQuestionNumbers();
+                }, 300);
+            }
+        }
+
+        // تحديث أرقام الأسئلة برمجياً بعد الحذف
+        function updateQuestionNumbers() {
+            const blocks = document.querySelectorAll('.question-block');
+            blocks.forEach((block, index) => {
+                const titleSpan = block.querySelector('.question-title span');
+                titleSpan.innerText = `السؤال رقم ${index + 1}`;
+            });
+        }
+
+        function saveExam() {
+            const questionsList = [];
+            const questionBlocks = document.querySelectorAll('.question-block');
+            let isValid = true;
+
+            questionBlocks.forEach((block, index) => {
+                const qText = block.querySelector('.question-text').value.trim();
+                const optionsInputs = block.querySelectorAll('.options-grid input');
+                const correctAns = block.querySelector('select').value;
+
+                // التحقق من أن جميع الحقول ممتلئة
+                let optionsValid = true;
+                optionsInputs.forEach(input => { if(input.value.trim() === '') optionsValid = false; });
+
+                if (qText === "" || correctAns === "" || !optionsValid) {
+                    isValid = false;
+                } else {
+                    questionsList.push({
+                        id: index + 1,
+                        text: qText,
+                        options: {
+                            a: optionsInputs[0].value.trim(),
+                            b: optionsInputs[1].value.trim(),
+                            c: optionsInputs[2].value.trim(),
+                            d: optionsInputs[3].value.trim()
+                        },
+                        correct: correctAns
+                    });
+                }
+            });
+
+            if (!isValid) {
+                alert("⚠️ يرجى التأكد من ملء جميع نصوص الأسئلة، الخيارات، وتحديد الإجابات الصحيحة لكل سؤال.");
+                return;
+            }
+
+            if (questionsList.length === 0) {
+                alert("⚠️ يرجى كتابة سؤال واحد على الأقل.");
+                return;
+            }
+
+            // حفظ الأسئلة في الـ LocalStorage
+            localStorage.setItem('savedExam', JSON.stringify(questionsList));
+            
+            alert("✅ تم حفظ الامتحان بنجاح! الأسئلة أصبحت متاحة للطلاب الآن.");
+            window.location.href = "index.html"; 
+        }
+    </script>
+</body>
+</html>
