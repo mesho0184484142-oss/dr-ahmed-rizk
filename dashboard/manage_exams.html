@@ -387,20 +387,18 @@
             if (archiveCount === 0) archiveGrid.innerHTML = '<p style="color:var(--secondary); font-weight:700; grid-column: 1/-1; text-align:center;">الأرشيف فارغ</p>';
         }
 
-     // دالة الطباعة باستخدام مسار المشروع الداخلي عبر نافذة مخفية (Iframe)
+   // دالة الطباعة المخصصة للعمل على السيرفرات و GitHub Pages
         function printExam(examId) {
             const exam = allExams[examId];
             if (!exam) return;
 
-            // مسار اللوجو العادي جداً جوه ملفات مشروعك
-            const logoPath = '../images/logo.png'; 
+            // السطر ده هو الحل: بيحول المسار النسبي لمسار كامل يبدأ بـ https
+            const logoPath = new URL('../images/logo.png', window.location.href).href; 
 
-            // إنشاء نافذة وهمية مخفية جوه نفس الصفحة بدل فتح تاب جديد
             let iframe = document.getElementById('print-iframe');
             if (!iframe) {
                 iframe = document.createElement('iframe');
                 iframe.id = 'print-iframe';
-                // إخفاء النافذة تماماً عشان متأثرش على شكل المنصة
                 iframe.style.position = 'absolute';
                 iframe.style.width = '0';
                 iframe.style.height = '0';
@@ -412,6 +410,8 @@
                 <html lang="ar" dir="rtl">
                 <head>
                     <meta charset="UTF-8">
+                    <!-- Base tag لمساعدة المتصفح في قراءة المسارات -->
+                    <base href="${window.location.href}">
                     <title>طباعة امتحان: ${exam.name}</title>
                     <style>
                         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
@@ -440,7 +440,6 @@
                             min-height: 100vh;
                         }
 
-                        /* العلامة المائية تستخدم مسار الصورة المباشر */
                         body::before {
                             content: "";
                             position: fixed;
@@ -489,72 +488,19 @@
                             border: 1px solid rgba(67, 24, 255, 0.1);
                         }
 
-                        .question-block { 
-                            margin-bottom: 35px; 
-                            page-break-inside: avoid; 
-                            background: transparent;
-                        }
-
-                        .question-title { 
-                            font-size: 20px; 
-                            font-weight: 800; 
-                            margin-bottom: 15px;
-                            color: var(--dark-text);
-                            line-height: 1.6;
-                        }
-                        
-                        .question-number {
-                            color: var(--primary);
-                            background: rgba(67, 24, 255, 0.1);
-                            padding: 2px 10px;
-                            border-radius: 8px;
-                            margin-left: 8px;
-                        }
-
-                        .options-list { 
-                            list-style-type: none; 
-                            padding: 0; 
-                            margin: 0; 
-                        }
-                        
-                        .options-list li { 
-                            margin-bottom: 12px; 
-                            font-size: 17px; 
-                            display: flex; 
-                            align-items: center; 
-                            font-weight: 600;
-                            color: #444;
-                        }
-
-                        .options-list li::before { 
-                            content: ""; 
-                            display: inline-block; 
-                            width: 16px; 
-                            height: 16px; 
-                            border: 2px solid var(--primary);
-                            background: rgba(67, 24, 255, 0.05);
-                            border-radius: 50%; 
-                            margin-left: 12px; 
-                        }
-
-                        .essay-space { 
-                            border: 2px dashed var(--secondary); 
-                            background: rgba(244, 247, 254, 0.7); 
-                            border-radius: 15px; 
-                            height: 150px; 
-                            margin-top: 15px; 
-                        }
-
-                        @media print {
-                            body { padding: 10px 20px; }
-                        }
+                        .question-block { margin-bottom: 35px; page-break-inside: avoid; background: transparent; }
+                        .question-title { font-size: 20px; font-weight: 800; margin-bottom: 15px; color: var(--dark-text); line-height: 1.6; }
+                        .question-number { color: var(--primary); background: rgba(67, 24, 255, 0.1); padding: 2px 10px; border-radius: 8px; margin-left: 8px; }
+                        .options-list { list-style-type: none; padding: 0; margin: 0; }
+                        .options-list li { margin-bottom: 12px; font-size: 17px; display: flex; align-items: center; font-weight: 600; color: #444; }
+                        .options-list li::before { content: ""; display: inline-block; width: 16px; height: 16px; border: 2px solid var(--primary); background: rgba(67, 24, 255, 0.05); border-radius: 50%; margin-left: 12px; }
+                        .essay-space { border: 2px dashed var(--secondary); background: rgba(244, 247, 254, 0.7); border-radius: 15px; height: 150px; margin-top: 15px; }
+                        @media print { body { padding: 10px 20px; } }
                     </style>
                 </head>
                 <body>
                     <div class="header">
-                        <!-- اللوجو الرئيسي باستخدام مسار المشروع -->
                         <img src="${logoPath}" alt="لوجو المنصة" class="header-logo" id="mainLogo">
-                        
                         <h1>${exam.name}</h1>
                         <div class="header-info">
                             مدة الامتحان: ${exam.duration} دقيقة &nbsp;&nbsp;|&nbsp;&nbsp; الدرجة النهائية: ${exam.totalScore || exam.totalQuestions || '--'} درجة
@@ -565,23 +511,14 @@
             if (exam.questions && Array.isArray(exam.questions) && exam.questions.length > 0) {
                 exam.questions.forEach((q, index) => {
                     let questionTitle = q.questionText || 'سؤال بدون عنوان';
-                    
-                    html += `
-                        <div class="question-block">
-                            <div class="question-title"><span class="question-number">${index + 1}</span> ${questionTitle}</div>
-                    `;
-                    
+                    html += `<div class="question-block"><div class="question-title"><span class="question-number">${index + 1}</span> ${questionTitle}</div>`;
                     if (q.options && Array.isArray(q.options)) {
                         html += `<ul class="options-list">`;
-                        q.options.forEach(opt => {
-                            html += `<li>${opt}</li>`;
-                        });
+                        q.options.forEach(opt => { html += `<li>${opt}</li>`; });
                         html += `</ul>`;
-                    } 
-                    else if (q.type === 'essay') {
+                    } else if (q.type === 'essay') {
                         html += `<div class="essay-space"></div>`;
                     }
-                    
                     html += `</div>`;
                 });
             } else {
@@ -604,7 +541,6 @@
                 </html>
             `;
 
-            // كتابة الكود جوه النافذة المخفية وتشغيل الطباعة منها
             const doc = iframe.contentWindow.document;
             doc.open();
             doc.write(html);
