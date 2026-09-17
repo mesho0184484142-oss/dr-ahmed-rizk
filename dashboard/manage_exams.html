@@ -387,16 +387,26 @@
             if (archiveCount === 0) archiveGrid.innerHTML = '<p style="color:var(--secondary); font-weight:700; grid-column: 1/-1; text-align:center;">الأرشيف فارغ</p>';
         }
 
-      // دالة الطباعة الملونة
-// دالة الطباعة الملونة مع اللوجو والعلامة المائية
+     // دالة الطباعة باستخدام مسار المشروع الداخلي عبر نافذة مخفية (Iframe)
         function printExam(examId) {
             const exam = allExams[examId];
             if (!exam) return;
 
-            const printWindow = window.open('', '_blank');
-            
-            // مسار اللوجو (تأكد إنه مطابق لمسار اللوجو في مشروعك)
+            // مسار اللوجو العادي جداً جوه ملفات مشروعك
             const logoPath = '../images/logo.png'; 
+
+            // إنشاء نافذة وهمية مخفية جوه نفس الصفحة بدل فتح تاب جديد
+            let iframe = document.getElementById('print-iframe');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'print-iframe';
+                // إخفاء النافذة تماماً عشان متأثرش على شكل المنصة
+                iframe.style.position = 'absolute';
+                iframe.style.width = '0';
+                iframe.style.height = '0';
+                iframe.style.border = 'none';
+                document.body.appendChild(iframe);
+            }
 
             let html = `
                 <html lang="ar" dir="rtl">
@@ -406,7 +416,6 @@
                     <style>
                         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
                         
-                        /* إجبار المتصفح على طباعة الألوان والصور الخلفية */
                         * {
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
@@ -427,11 +436,11 @@
                             direction: rtl; 
                             max-width: 800px; 
                             margin: auto; 
-                            position: relative; /* ضروري عشان العلامة المائية */
+                            position: relative; 
                             min-height: 100vh;
                         }
 
-                        /* 💧 كود العلامة المائية */
+                        /* العلامة المائية تستخدم مسار الصورة المباشر */
                         body::before {
                             content: "";
                             position: fixed;
@@ -444,7 +453,7 @@
                             background-size: contain;
                             background-repeat: no-repeat;
                             background-position: center;
-                            opacity: 0.08; /* درجة الشفافية: 8% عشان متغبش على النص */
+                            opacity: 0.08; 
                             z-index: -1;
                             pointer-events: none;
                         }
@@ -456,9 +465,8 @@
                             margin-bottom: 35px; 
                         }
                         
-                        /* 🖼️ تصميم اللوجو في الهيدر */
                         .header-logo {
-                            width: 90px;
+                            width: 100px;
                             height: auto;
                             margin-bottom: 15px;
                         }
@@ -531,7 +539,7 @@
 
                         .essay-space { 
                             border: 2px dashed var(--secondary); 
-                            background: rgba(244, 247, 254, 0.7); /* خلفية شفافة شوية */
+                            background: rgba(244, 247, 254, 0.7); 
                             border-radius: 15px; 
                             height: 150px; 
                             margin-top: 15px; 
@@ -544,8 +552,8 @@
                 </head>
                 <body>
                     <div class="header">
-                        <!-- اللوجو هنا -->
-                        <img src="${logoPath}" alt="لوجو المنصة" class="header-logo" onerror="this.style.display='none'">
+                        <!-- اللوجو الرئيسي باستخدام مسار المشروع -->
+                        <img src="${logoPath}" alt="لوجو المنصة" class="header-logo" id="mainLogo">
                         
                         <h1>${exam.name}</h1>
                         <div class="header-info">
@@ -580,19 +588,27 @@
                 html += `<p style="text-align: center; font-size: 20px; font-weight: bold; color: var(--secondary);">لا توجد أسئلة مسجلة في هذا الامتحان.</p>`;
             }
 
-            // تأخير أمر الطباعة ثانية واحدة عشان ندي فرصة للوجو يحمل
             html += `
                     <script>
-                        window.onload = function() { 
-                            setTimeout(() => { window.print(); }, 500);
+                        window.onload = function() {
+                            const logo = document.getElementById('mainLogo');
+                            if (logo.complete) {
+                                window.print();
+                            } else {
+                                logo.onload = function() { window.print(); };
+                                logo.onerror = function() { window.print(); }; 
+                            }
                         }
                     <\/script>
                 </body>
                 </html>
             `;
 
-            printWindow.document.write(html);
-            printWindow.document.close();
+            // كتابة الكود جوه النافذة المخفية وتشغيل الطباعة منها
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(html);
+            doc.close();
         }
         
 
