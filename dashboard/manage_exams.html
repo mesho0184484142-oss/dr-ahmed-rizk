@@ -387,13 +387,14 @@
             if (archiveCount === 0) archiveGrid.innerHTML = '<p style="color:var(--secondary); font-weight:700; grid-column: 1/-1; text-align:center;">الأرشيف فارغ</p>';
         }
 
-   // دالة الطباعة المخصصة للعمل على السيرفرات و GitHub Pages
+     // دالة الطباعة المحدثة بالمسار الصحيح (assets/images)
         function printExam(examId) {
             const exam = allExams[examId];
             if (!exam) return;
 
-            // السطر ده هو الحل: بيحول المسار النسبي لمسار كامل يبدأ بـ https
-            const logoPath = new URL('../images/logo.png', window.location.href).href; 
+            // بناء المسار الصحيح بناءً على هيكل ملفاتك في GitHub
+            const baseUrl = window.location.href.split('/dashboard/')[0];
+            const logoPath = baseUrl + '/assets/images/logo.png'; 
 
             let iframe = document.getElementById('print-iframe');
             if (!iframe) {
@@ -410,8 +411,6 @@
                 <html lang="ar" dir="rtl">
                 <head>
                     <meta charset="UTF-8">
-                    <!-- Base tag لمساعدة المتصفح في قراءة المسارات -->
-                    <base href="${window.location.href}">
                     <title>طباعة امتحان: ${exam.name}</title>
                     <style>
                         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
