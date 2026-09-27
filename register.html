@@ -354,7 +354,6 @@
                 pendingUserData = {
                     name: document.getElementById('regFullName').value.trim(),
                     university: document.getElementById('regUniversity').value,
-                    // إذا لم يكن الحقل ظاهراً/مطلوباً، نعطيه قيمة افتراضية
                     grade: document.getElementById('regGrade').value || "غير مطبق", 
                     center: document.getElementById('regCenter').value || "غير مطبق",
                     email: email,
@@ -363,12 +362,25 @@
                     username: username
                 };
 
-                generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
+                // 🔴 التعديل المؤقت: تثبيت كود التحقق للسكرتيرة
+                generatedOTP = "0184"; 
 
+                // الانتقال مباشرة لشاشة إدخال الكود وإخفاء شاشة التسجيل
+                document.getElementById('registrationFormContainer').style.display = 'none';
+                document.getElementById('otpFormContainer').style.display = 'block';
+                
+                // تغيير الرسالة لتوضيح وضع الطوارئ للسكرتيرة
+                document.getElementById('otpMessage').innerHTML = `<strong style="color:var(--primary); font-size: 18px;">وضع الطوارئ مفعل</strong><br>يرجى إدخال الرقم السري الثابت (0184) لإنشاء الحساب فوراً.`;
+                
+                document.getElementById('otpInput').focus();
+                resetBtn();
+
+                /* 
+                // 🔴 تم تعطيل كود إرسال الإيميل مؤقتاً لحين تجديد الباقة
                 const templateParams = {
                     to_name: pendingUserData.name,
                     to_email: email,
-                    otp_code: generatedOTP
+                    otp_code: Math.floor(1000 + Math.random() * 9000).toString()
                 };
 
                 submitBtn.innerText = "⏳ جاري إرسال كود التحقق للإيميل...";
@@ -379,7 +391,7 @@
                         document.getElementById('otpFormContainer').style.display = 'block';
                         
                         let hiddenEmail = email.replace(/(.{2})(.*)(?=@)/, (gp1, gp2, gp3) => { return gp1 + gp3.replace(/./g, '*') });
-                        document.getElementById('otpMessage').innerHTML = `لقد أرسلنا كود تحقق يتكون من 4 أرقام إلى الإيميل:<br><strong style="color:var(--primary); font-size: 18px; display:inline-block; margin-top:10px;">${hiddenEmail}</strong>`;
+                        document.getElementById('otpMessage').innerHTML = \`لقد أرسلنا كود تحقق يتكون من 4 أرقام إلى الإيميل:<br><strong style="color:var(--primary); font-size: 18px; display:inline-block; margin-top:10px;">\${hiddenEmail}</strong>\`;
                         
                         document.getElementById('otpInput').focus();
                         resetBtn();
@@ -388,6 +400,8 @@
                         console.error(error);
                         resetBtn();
                     });
+                */
+
             }).catch((error) => {
                 alert("❌ حدث خطأ في الاتصال بقاعدة البيانات.");
                 resetBtn();
